@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Laika ziņas</title>
+  
+  <!-- PWA & Dynamic Icon Links -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1060a4">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Google Fonts & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  
+  <style>
+    :root {
+      --md-sys-color-primary: #1060a4;
+      --md-sys-color-on-primary: #ffffff;
+      --md-sys-color-primary-container: #d2e4ff;
+      --md-sys-color-on-primary-container: #001c38;
+      --md-sys-color-surface: #f8f9ff;
+      --md-sys-color-on-surface: #191c20;
+      --md-sys-color-surface-variant: #e1e2ec;
+      --md-sys-color-on-surface-variant: #44474f;
+      --md-sys-color-surface-container: #edeef6;
+      --md-sys-color-surface-container-high: #e7e8f0;
+      --md-sys-color-surface-container-lowest: #ffffff;
+      --md-sys-color-outline: #74777f;
+      --md-sys-color-outline-variant: #c4c6d0;
+      --md-sys-color-secondary-container: #d7e3f8;
+      --md-sys-color-on-secondary-container: #101c2b;
+      --md-sys-shape-corner-extra-large: 28px;
+      --md-sys-shape-corner-large: 20px;
+      --md-sys-shape-corner-medium: 16px;
+      --md-sys-shape-corner-full: 9999px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --md-sys-color-primary: #a1c9ff;
+        --md-sys-color-on-primary: #00315e;
+        --md-sys-color-primary-container: #004885;
+        --md-sys-color-on-primary-container: #d2e4ff;
+        --md-sys-color-surface: #111418;
+        --md-sys-color-on-surface: #e1e2e8;
+        --md-sys-color-surface-variant: #43474e;
+        --md-sys-color-on-surface-variant: #c4c6cf;
+        --md-sys-color-surface-container: #1d2024;
+        --md-sys-color-surface-container-high: #272a2f;
+        --md-sys-color-surface-container-lowest: #0c0e12;
+        --md-sys-color-outline: #8d9199;
+        --md-sys-color-outline-variant: #43474e;
+        --md-sys-color-secondary-container: #3d4758;
+        --md-sys-color-on-secondary-container: #d7e3f8;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Google Sans Text', -apple-system, Roboto, sans-serif;
+      background-color: var(--md-sys-color-surface);
+      color: var(--md-sys-color-on-surface);
+      line-height: 1.4;
+      padding-bottom: env(safe-area-inset-bottom, 32px);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: calc(env(safe-area-inset-top, 20px) + 16px) 20px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .location-title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Pilsētu izvēlne */
+    .city-segmented-control {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background-color: var(--md-sys-color-surface-container-high);
+      border-radius: var(--md-sys-shape-corner-full);
+      padding: 4px;
+      margin: 4px 16px 14px;
+      gap: 4px;
+      border: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    .city-btn {
+      border: none;
+      background: transparent;
+      color: var(--md-sys-color-on-surface-variant);
+      padding: 10px 8px;
+      border-radius: var(--md-sys-shape-corner-full);
+      font-family: 'Google Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+      transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .city-btn.active {
+      background-color: var(--md-sys-color-surface-container-lowest);
+      color: var(--md-sys-color-primary);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .status-badge {
+      font-size: 13px;
+      font-weight: 500;
+      background: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+      padding: 6px 14px;
+      border-radius: var(--md-sys-shape-corner-full);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .status-badge.refreshing .material-symbols-outlined {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    .container {
+      padding: 0 16px 28px;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .hero-card {
+      background: linear-gradient(145deg, var(--md-sys-color-surface-container-high), var(--md-sys-color-surface-container));
+      border-radius: var(--md-sys-shape-corner-extra-large);
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--md-sys-color-outline-variant);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .hero-badge {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .main-temp-wrapper {
+      margin: 14px 0 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .main-icon {
+      font-size: 64px !important;
+      color: var(--md-sys-color-primary);
+    }
+
+    .main-temp {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 72px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .weather-summary {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .feels-like {
+      font-size: 14px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .stat-pill {
+      background-color: var(--md-sys-color-surface-container-lowest);
+      border-radius: var(--md-sys-shape-corner-large);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stat-pill .material-symbols-outlined {
+      color: var(--md-sys-color-primary);
+      font-size: 26px;
+    }
+
+    .stat-info {
+      text-align: left;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--md-sys-color-on-surface-variant);
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--md-sys-color-outline);
+    }
+
+    .section-header-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 8px 4px 4px;
+    }
+
+    .section-title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--md-sys-color-on-surface);
+    }
+
+    .reset-today-btn {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--md-sys-color-primary);
+      background: var(--md-sys-color-primary-container);
+      padding: 4px 10px;
+      border-radius: var(--md-sys-shape-corner-full);
+      display: none;
+      cursor: pointer;
+    }
+
+    .hourly-card {
+      background-color: var(--md-sys-color-surface-container);
+      border-radius: var(--md-sys-shape-corner-extra-large);
+      padding: 16px;
+      border: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    .hourly-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .hourly-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .hour-item {
+      flex: 0 0 92px;
+      background: var(--md-sys-color-surface-container-lowest);
+      border-radius: var(--md-sys-shape-corner-medium);
+      padding: 12px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      scroll-snap-align: start;
+    }
+
+    .hour-item.active {
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      font-weight: 600;
+    }
+
+    .hour-time {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .hour-temp {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .hour-precip {
+      font-size: 11px;
+      color: #0077c2;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-weight: 600;
+    }
+
+    .hour-wind {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      color: var(--md-sys-color-on-surface-variant);
+      margin-top: 2px;
+    }
+
+    .wind-icon {
+      font-size: 14px !important;
+      display: inline-block;
+    }
+
+    .daily-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .day-card {
+      background-color: var(--md-sys-color-surface-container);
+      border-radius: var(--md-sys-shape-corner-large);
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: 88px 40px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid var(--md-sys-color-outline-variant);
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .day-card:active {
+      transform: scale(0.99);
+    }
+
+    .day-card.active-day {
+      background-color: var(--md-sys-color-primary-container);
+      border-color: var(--md-sys-color-primary);
+    }
+
+    .day-card.active-day .day-name {
+      color: var(--md-sys-color-on-primary-container);
+    }
+
+    .day-name {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .day-date {
+      font-size: 12px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .day-weather-desc {
+      font-size: 12px;
+      color: var(--md-sys-color-on-surface-variant);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .day-temp-range {
+      text-align: right;
+    }
+
+    .day-max {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .day-min {
+      font-size: 13px;
+      color: var(--md-sys-color-on-surface-variant);
+      margin-left: 5px;
+    }
+
+    .precip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #0077c2;
+    }
+
+    .wind-detail {
+      font-size: 11px;
+      color: var(--md-sys-color-outline);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    /* Paslēpj Netlify badge */
+    [data-netlify-drawer],
+    [class*="netlify"],
+    #netlify-badge,
+    .netlify-badge,
+    netlify-drawer {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <div class="location-title">
+        <span class="material-symbols-outlined" style="color: var(--md-sys-color-primary);">near_me</span>
+        <span id="selectedCityName">Saulkrasti</span>
+      </div>
+      <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);" id="selectedCitySub">Piekrastes josla, Vidzeme</span>
+    </div>
+    <div class="status-badge" id="refreshBtn" onclick="fetchWeatherData()">
+      <span class="material-symbols-outlined" id="refreshIcon" style="font-size: 16px;">autorenew</span>
+      <span id="updateTime">Ielādē...</span>
+    </div>
+  </header>
+
+  <!-- Pilsētu izvēlne -->
+  <div class="city-segmented-control">
+    <button class="city-btn active" id="btnSaulkrasti" onclick="switchCity('saulkrasti')">
+      <span class="material-symbols-outlined" style="font-size: 17px;">waves</span>
+      Saulkrasti
+    </button>
+    <button class="city-btn" id="btnCentrs" onclick="switchCity('centrs')">
+      <span class="material-symbols-outlined" style="font-size: 17px;">location_city</span>
+      Centrs
+    </button>
+    <button class="city-btn" id="btnVecmilgravis" onclick="switchCity('vecmilgravis')">
+      <span class="material-symbols-outlined" style="font-size: 17px;">directions_boat</span>
+      Vecmīlgrāvis
+    </button>
+  </div>
+
+  <main class="container">
+    <!-- Pašreizējais laiks -->
+    <section class="hero-card">
+      <div class="hero-badge">
+        <span class="material-symbols-outlined" style="font-size: 18px;">sensors</span>
+        Tiešsaistes dati
+      </div>
+
+      <div class="main-temp-wrapper">
+        <span class="material-symbols-outlined main-icon" id="currentIcon">cloud</span>
+        <span class="main-temp" id="currentTemp">--°</span>
+      </div>
+
+      <div class="weather-summary" id="currentWeatherDesc">Meklē datus...</div>
+      <div class="feels-like">Izjūtu temperatūra: <strong id="currentApparentTemp">--°C</strong></div>
+
+      <div class="stats-grid">
+        <div class="stat-pill">
+          <span class="material-symbols-outlined">air</span>
+          <div class="stat-info">
+            <div class="stat-label">Vējš</div>
+            <div class="stat-value">
+              <span id="currentWindSpeed">-- m/s</span>
+              <span class="stat-sub" id="currentWindDir">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-pill">
+          <span class="material-symbols-outlined" id="currentPrecipIcon">water_drop</span>
+          <div class="stat-info">
+            <div class="stat-label">Nokrišņi</div>
+            <div class="stat-value">
+              <span id="currentPrecip">-- mm</span>
+              <span class="stat-sub" id="currentPrecipProb">Varbūtība: --%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dinamisks stundu virsraksts ar iespēju atgriezties pie šodienas -->
+    <div class="section-header-wrap">
+      <div class="section-title" id="hourlySectionTitle">
+        <span class="material-symbols-outlined">schedule</span>
+        <span id="hourlyTitleText">Šodien pa stundām</span>
+      </div>
+      <div class="reset-today-btn" id="resetTodayBtn" onclick="selectToday()">
+        Rādīt šodienu
+      </div>
+    </div>
+
+    <section class="hourly-card">
+      <div class="hourly-scroll" id="hourlyList">
+        <div style="padding: 12px; font-size: 13px; color: var(--md-sys-color-outline);">Ielādē stundu datus...</div>
+      </div>
+    </section>
+
+    <div class="section-title" style="margin: 8px 4px 4px;">
+      <span class="material-symbols-outlined">calendar_month</span>
+      Nākamās 7 dienas (pieskaries dienai)
+    </div>
+
+    <section class="daily-list" id="dailyList">
+      <div style="padding: 12px; font-size: 13px; color: var(--md-sys-color-outline);">Ielādē 7 dienu prognozi...</div>
+    </section>
+  </main>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    const CITIES = {
+      saulkrasti: {
+        name: 'Saulkrasti',
+        sub: 'Piekrastes josla, Vidzeme',
+        lat: 57.26,
+        lon: 24.41
+      },
+      centrs: {
+        name: 'Rīgas centrs',
+        sub: 'Pilsētas centra zona',
+        lat: 56.95,
+        lon: 24.11
+      },
+      vecmilgravis: {
+        name: 'Vecmīlgrāvis',
+        sub: 'Ziemeļu rajons, piekrastes ieteka',
+        lat: 57.03,
+        lon: 24.10
+      }
+    };
+
+    let currentCityKey = 'saulkrasti';
+    let cachedHourlyData = null;
+    let selectedDateString = null;
+
+    /** Pārslēdz pilsētu */
+    function switchCity(cityKey) {
+      if (currentCityKey === cityKey) return;
+      currentCityKey = cityKey;
+
+      document.getElementById('btnSaulkrasti').classList.toggle('active', cityKey === 'saulkrasti');
+      document.getElementById('btnCentrs').classList.toggle('active', cityKey === 'centrs');
+      document.getElementById('btnVecmilgravis').classList.toggle('active', cityKey === 'vecmilgravis');
+
+      document.getElementById('selectedCityName').textContent = CITIES[cityKey].name;
+      document.getElementById('selectedCitySub').textContent = CITIES[cityKey].sub;
+
+      selectedDateString = null;
+      fetchWeatherData();
+    }
+
+    /** @param {number} deg */
+    function getWindDirection(deg) {
+      const dirs = [
+        { name: 'Z', full: 'Ziemeļi' },
+        { name: 'ZA', full: 'Ziemeļaustrumi' },
+        { name: 'A', full: 'Austrumi' },
+        { name: 'DA', full: 'Dienvidaustrumi' },
+        { name: 'D', full: 'Dienvidi' },
+        { name: 'DR', full: 'Dienvidrietumi' },
+        { name: 'R', full: 'Rietumi' },
+        { name: 'ZR', full: 'Ziemeļrietumi' }
+      ];
+      return dirs[Math.round(deg / 45) % 8];
+    }
+
+    /** @param {number} code */
+    function decodeWMO(code) {
+      if (code === 0) return { desc: 'Skaidrs', icon: 'clear_day', isSnow: false };
+      if (code === 1) return { desc: 'Lielākoties skaidrs', icon: 'partly_cloudy_day', isSnow: false };
+      if (code === 2) return { desc: 'Daļēji mākoņains', icon: 'partly_cloudy_day', isSnow: false };
+      if (code === 3) return { desc: 'Apmācies', icon: 'cloud', isSnow: false };
+      if ([45, 48].includes(code)) return { desc: 'Migla', icon: 'foggy', isSnow: false };
+      if ([51, 53, 55].includes(code)) return { desc: 'Smidzināšana', icon: 'rainy', isSnow: false };
+      if ([61, 63, 65].includes(code)) return { desc: 'Lietus', icon: 'rainy', isSnow: false };
+      if ([66, 67].includes(code)) return { desc: 'Sasalstošs lietus', icon: 'ac_unit', isSnow: false };
+      if ([71, 73, 75, 77].includes(code)) return { desc: 'Sniegs', icon: 'ac_unit', isSnow: true };
+      if ([80, 81, 82].includes(code)) return { desc: 'Lietusgāzes', icon: 'rainy', isSnow: false };
+      if ([85, 86].includes(code)) return { desc: 'Sniegputenis / Slapjdranķis', icon: 'weather_snowy', isSnow: true };
+      if ([95, 96, 99].includes(code)) return { desc: 'Pērkona negaiss', icon: 'thunderstorm', isSnow: false };
+      return { desc: 'Mākoņains', icon: 'cloud', isSnow: false };
+    }
+
+    const weekdays = ['Svētdiena', 'Pirmdiena', 'Otrdiena', 'Trešdiena', 'Ceturtdiena', 'Piektdiena', 'Sestdiena'];
+
+    async function fetchWeatherData() {
+      const badge = document.getElementById('refreshBtn');
+      if (badge) badge.classList.add('refreshing');
+
+      const city = CITIES[currentCityKey];
+
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant&wind_speed_unit=ms&timezone=auto&forecast_days=8`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+
+        cachedHourlyData = data.hourly;
+
+        renderCurrent(data.current);
+        renderDaily(data.daily);
+        renderHourly();
+
+        const now = new Date();
+        const timeEl = document.getElementById('updateTime');
+        if (timeEl) timeEl.textContent = now.toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' });
+      } catch (err) {
+        const timeEl = document.getElementById('updateTime');
+        if (timeEl) timeEl.textContent = 'Kļūda';
+      } finally {
+        if (badge) badge.classList.remove('refreshing');
+      }
+    }
+
+    /** @param {any} c */
+    function renderCurrent(c) {
+      const wmo = decodeWMO(c.weather_code);
+      const tempEl = document.getElementById('currentTemp');
+      const appTempEl = document.getElementById('currentApparentTemp');
+      const descEl = document.getElementById('currentWeatherDesc');
+      const iconEl = document.getElementById('currentIcon');
+      const windSpeedEl = document.getElementById('currentWindSpeed');
+      const windDirEl = document.getElementById('currentWindDir');
+      const precipEl = document.getElementById('currentPrecip');
+      const precipProbEl = document.getElementById('currentPrecipProb');
+      const precipIconEl = document.getElementById('currentPrecipIcon');
+
+      const roundedTemp = Math.round(c.temperature_2m);
+      if (tempEl) tempEl.textContent = `${roundedTemp > 0 ? '+' : ''}${roundedTemp}°`;
+      if (appTempEl) appTempEl.textContent = `${c.apparent_temperature > 0 ? '+' : ''}${Math.round(c.apparent_temperature)}°C`;
+      if (descEl) descEl.textContent = wmo.desc;
+      if (iconEl) iconEl.textContent = wmo.icon;
+
+      if ('setAppBadge' in navigator) {
+        navigator.setAppBadge(Math.abs(roundedTemp)).catch(() => {});
+      }
+
+      const wind = getWindDirection(c.wind_direction_10m);
+      if (windSpeedEl) windSpeedEl.textContent = `${c.wind_speed_10m.toFixed(1)} m/s`;
+      if (windDirEl) windDirEl.textContent = `${wind.name} (${wind.full})`;
+
+      const precipText = c.snowfall > 0 ? `${c.snowfall} cm sniegs` : `${c.precipitation.toFixed(1)} mm`;
+      if (precipEl) precipEl.textContent = precipText;
+      if (precipProbEl) precipProbEl.textContent = c.precipitation > 0 ? 'Nokrišņi fiksēti' : 'Bez nokrišņiem';
+      if (precipIconEl) precipIconEl.textContent = c.snowfall > 0 ? 'ac_unit' : 'water_drop';
+    }
+
+    function renderHourly() {
+      if (!cachedHourlyData) return;
+      const h = cachedHourlyData;
+      const list = document.getElementById('hourlyList');
+      const titleText = document.getElementById('hourlyTitleText');
+      const resetBtn = document.getElementById('resetTodayBtn');
+      if (!list) return;
+      list.innerHTML = '';
+
+      const now = new Date();
+      const todayDateStr = now.toLocaleDateString('en-CA');
+      const isViewingToday = !selectedDateString || selectedDateString === todayDateStr;
+
+      if (isViewingToday) {
+        if (titleText) titleText.textContent = 'Šodien pa stundām (atlikušās)';
+        if (resetBtn) resetBtn.style.display = 'none';
+      } else {
+        const selDate = new Date(selectedDateString);
+        const dayLabel = weekdays[selDate.getDay()];
+        if (titleText) titleText.textContent = `${dayLabel} pa stundām (24h)`;
+        if (resetBtn) resetBtn.style.display = 'block';
+      }
+
+      const targetDateStr = isViewingToday ? todayDateStr : selectedDateString;
+      let first = true;
+
+      for (let i = 0; i < h.time.length; i++) {
+        const itemDate = new Date(h.time[i]);
+        const itemDateStr = itemDate.toLocaleDateString('en-CA');
+
+        if (itemDateStr !== targetDateStr) continue;
+        if (isViewingToday && itemDate.getHours() < now.getHours()) continue;
+
+        const wmo = decodeWMO(h.weather_code[i]);
+        const wind = getWindDirection(h.wind_direction_10m[i]);
+        const temp = Math.round(h.temperature_2m[i]);
+        const isCurrentHour = isViewingToday && first;
+
+        const item = document.createElement('div');
+        item.className = `hour-item ${isCurrentHour ? 'active' : ''}`;
+        item.innerHTML = `
+          <span class="hour-time">${isCurrentHour ? 'Tagad' : itemDate.getHours() + ':00'}</span>
+          <span class="material-symbols-outlined" style="font-size: 26px;">${wmo.icon}</span>
+          <span class="hour-temp">${temp > 0 ? '+' : ''}${temp}°</span>
+          <span class="hour-precip">
+            <span class="material-symbols-outlined" style="font-size: 13px;">${wmo.isSnow ? 'ac_unit' : 'water_drop'}</span>
+            ${h.precipitation_probability[i]}%
+          </span>
+          <span class="hour-wind">
+            <span class="material-symbols-outlined wind-icon" style="transform: rotate(${h.wind_direction_10m[i]}deg);">south</span>
+            ${h.wind_speed_10m[i].toFixed(1)} ${wind.name}
+          </span>
+        `;
+        list.appendChild(item);
+        first = false;
+      }
+
+      list.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+
+    /** @param {any} d */
+    function renderDaily(d) {
+      const list = document.getElementById('dailyList');
+      if (!list) return;
+      list.innerHTML = '';
+
+      for (let i = 1; i <= 7 && i < d.time.length; i++) {
+        const date = new Date(d.time[i]);
+        const dateIsoStr = d.time[i].slice(0, 10);
+        const wmo = decodeWMO(d.weather_code[i]);
+        const wind = getWindDirection(d.wind_direction_10m_dominant[i]);
+        const maxTemp = Math.round(d.temperature_2m_max[i]);
+        const minTemp = Math.round(d.temperature_2m_min[i]);
+
+        const dayName = i === 1 ? 'Rītdiena' : weekdays[date.getDay()];
+        const dateStr = `${date.getDate()}. ${['janv.', 'febr.', 'marts', 'apr.', 'maijs', 'jūn.', 'jūl.', 'aug.', 'sept.', 'okt.', 'nov.', 'dec.'][date.getMonth()]}`;
+
+        const card = document.createElement('div');
+        card.className = `day-card ${selectedDateString === dateIsoStr ? 'active-day' : ''}`;
+        card.onclick = () => selectDay(dateIsoStr, card);
+
+        card.innerHTML = `
+          <div>
+            <div class="day-name">${dayName}</div>
+            <div class="day-date">${dateStr}</div>
+          </div>
+          <span class="material-symbols-outlined" style="font-size: 28px; color: var(--md-sys-color-primary);">${wmo.icon}</span>
+          <div class="day-weather-desc">
+            <span class="precip-badge">
+              <span class="material-symbols-outlined" style="font-size: 13px;">${wmo.isSnow ? 'ac_unit' : 'water_drop'}</span>
+              ${wmo.desc} (${d.precipitation_sum[i].toFixed(1)} mm)
+            </span>
+            <span class="wind-detail">
+              <span class="material-symbols-outlined" style="font-size: 13px; transform: rotate(${d.wind_direction_10m_dominant[i]}deg);">south</span>
+              ${d.wind_speed_10m_max[i].toFixed(1)} m/s ${wind.name} (${wind.full})
+            </span>
+          </div>
+          <div class="day-temp-range">
+            <span class="day-max">${maxTemp > 0 ? '+' : ''}${maxTemp}°</span>
+            <span class="day-min">${minTemp > 0 ? '+' : ''}${minTemp}°</span>
+          </div>
+        `;
+        list.appendChild(card);
+      }
+    }
+
+    /** 
+     * @param {string} dateIsoStr 
+     * @param {HTMLElement} cardEl
+     */
+    function selectDay(dateIsoStr, cardEl) {
+      if (selectedDateString === dateIsoStr) {
+        selectToday();
+        return;
+      }
+
+      selectedDateString = dateIsoStr;
+      
+      document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active-day'));
+      if (cardEl) cardEl.classList.add('active-day');
+
+      renderHourly();
+
+      const hourlySection = document.getElementById('hourlySectionTitle');
+      if (hourlySection) {
+        hourlySection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function selectToday() {
+      selectedDateString = null;
+      document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active-day'));
+      renderHourly();
+    }
+
+    // Inicializācija
+    fetchWeatherData();
+    setInterval(fetchWeatherData, 15 * 60 * 1000);
+  </script>
+</body>
+</html>
