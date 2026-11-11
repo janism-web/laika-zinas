@@ -524,7 +524,7 @@
           </div>
         </div>
 
-        <div class="stat-pill">
+        <div class="stat-pill" id="currentPrecipPill">
           <span class="material-symbols-outlined" id="currentPrecipIcon">water_drop</span>
           <div class="stat-info">
             <div class="stat-label">Nokrišņi</div>
@@ -534,7 +534,29 @@
             </div>
           </div>
         </div>
-      </div>
+
+        <div class="stat-pill" id="auroraPill" style="display: none;">
+          <span class="material-symbols-outlined" id="auroraIcon">flare</span>
+          <div class="stat-info">
+            <div class="stat-label">Ziemeļblāzma</div>
+            <div class="stat-value">
+              <span id="auroraStatus">Ielādē...</span>
+              <span class="stat-sub" id="auroraKp">Kp indekss: --</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-pill">
+          <span class="material-symbols-outlined" id="moonIcon">brightness_medium</span>
+          <div class="stat-info">
+            <div class="stat-label">Mēness fāze</div>
+            <div class="stat-value">
+              <span id="moonPhaseName">Ielādē...</span>
+              <span class="stat-sub" id="moonFullCountdown">Pilnmēness: --</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
     </section>
 
     <!-- Dinamisks stundu virsraksts ar iespēju atgriezties pie šodienas -->
@@ -663,6 +685,8 @@
         renderCurrent(data.current);
         renderDaily(data.daily);
         renderHourly();
+        calculateMoonPhase();
+        fetchAuroraForecast();
 
         const now = new Date();
         const timeEl = document.getElementById('updateTime');
@@ -702,10 +726,24 @@
       if (windSpeedEl) windSpeedEl.textContent = `${c.wind_speed_10m.toFixed(1)} m/s`;
       if (windDirEl) windDirEl.textContent = `${wind.name} (${wind.full})`;
 
-      const precipText = c.snowfall > 0 ? `${c.snowfall} cm sniegs` : `${c.precipitation.toFixed(1)} mm`;
-      if (precipEl) precipEl.textContent = precipText;
-      if (precipProbEl) precipProbEl.textContent = c.precipitation > 0 ? 'Nokrišņi fiksēti' : 'Bez nokrišņiem';
-      if (precipIconEl) precipIconEl.textContent = c.snowfall > 0 ? 'ac_unit' : 'water_drop';
+      // Nosakām šī brīža nokrišņu varbūtību no stundu datiem
+      let currentProb = 0;
+      if (cachedHourlyData && cachedHourlyData.precipitation_probability) {
+        const curHour = new Date().getHours();
+        currentProb = cachedHourlyData.precipitation_probability[curHour] || 0;
+      }
+
+      const precipPill = document.getElementById('currentPrecipPill');
+      if (currentProb > 0 || c.precipitation > 0) {
+        if (precipPill) precipPill.style.display = 'flex';
+        const precipText = c.snowfall > 0 ? `${c.snowfall} cm sniegs` : `${c.precipitation.toFixed(1)} mm`;
+        if (precipEl) precipEl.textContent = precipText;
+        if (precipProbEl) precipProbEl.textContent = `Varbūtība: ${currentProb}%`;
+        if (precipIconEl) precipIconEl.textContent = (c.snowfall > 0 || wmo.isSnow) ? 'ac_unit' : 'water_drop';
+      } else {
+        // Paslēpj nokrišņu kartīti, ja varbūtība ir 0%
+        if (precipPill) precipPill.style.display = 'none';
+      }
     }
 
     function renderHourly() {
@@ -752,10 +790,11 @@
           <span class="hour-time">${isCurrentHour ? 'Tagad' : itemDate.getHours() + ':00'}</span>
           <span class="material-symbols-outlined" style="font-size: 26px;">${wmo.icon}</span>
           <span class="hour-temp">${temp > 0 ? '+' : ''}${temp}°</span>
+          ${h.precipitation_probability[i] > 0 ? `
           <span class="hour-precip">
             <span class="material-symbols-outlined" style="font-size: 13px;">${wmo.isSnow ? 'ac_unit' : 'water_drop'}</span>
             ${h.precipitation_probability[i]}%
-          </span>
+          </span>` : ''}
           <span class="hour-wind">
             <span class="material-symbols-outlined wind-icon" style="transform: rotate(${h.wind_direction_10m[i]}deg);">south</span>
             ${h.wind_speed_10m[i].toFixed(1)} ${wind.name}
@@ -796,9 +835,9 @@
           </div>
           <span class="material-symbols-outlined" style="font-size: 28px; color: var(--md-sys-color-primary);">${wmo.icon}</span>
           <div class="day-weather-desc">
-            <span class="precip-badge">
-              <span class="material-symbols-outlined" style="font-size: 13px;">${wmo.isSnow ? 'ac_unit' : 'water_drop'}</span>
-              ${wmo.desc} (${d.precipitation_sum[i].toFixed(1)} mm)
+            <span class="precip-badge" style="${(d.precipitation_probability_max[i] > 0 || d.precipitation_sum[i] > 0) ? '' : 'color: var(--md-sys-color-on-surface-variant); font-weight: normal;'}">
+              <span class="material-symbols-outlined" style="font-size: 13px;">${(d.precipitation_probability_max[i] > 0 || d.precipitation_sum[i] > 0) ? (wmo.isSnow ? 'ac_unit' : 'water_drop') : 'check_circle'}</span>
+              ${wmo.desc} ${(d.precipitation_probability_max[i] > 0 || d.precipitation_sum[i] > 0) ? `(${d.precipitation_probability_max[i]}%, ${d.precipitation_sum[i].toFixed(1)} mm)` : ''}
             </span>
             <span class="wind-detail">
               <span class="material-symbols-outlined" style="font-size: 13px; transform: rotate(${d.wind_direction_10m_dominant[i]}deg);">south</span>
@@ -841,6 +880,108 @@
       selectedDateString = null;
       document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active-day'));
       renderHourly();
+    }
+
+
+    /** Mēness fāzes un pilnmēness aprēķins */
+    function calculateMoonPhase() {
+      const now = new Date();
+      // Zināms jaunmēness atskaites punkts (2000-01-06 18:14 UTC)
+      const refNewMoon = new Date(Date.UTC(2000, 0, 6, 18, 14, 0));
+      const synodicMonth = 29.53058867; // dienas
+      
+      const diffDays = (now.getTime() - refNewMoon.getTime()) / (1000 * 60 * 60 * 24);
+      const phaseCycle = (diffDays % synodicMonth) / synodicMonth; // 0.0 līdz 1.0
+      
+      let phaseName = 'Jaunmēness';
+      let icon = 'bedtime';
+      
+      if (phaseCycle < 0.03 || phaseCycle >= 0.97) {
+        phaseName = 'Jauns mēness';
+        icon = 'radio_button_unchecked';
+      } else if (phaseCycle < 0.22) {
+        phaseName = 'Augošs sirpis';
+        icon = 'brightness_3';
+      } else if (phaseCycle < 0.28) {
+        phaseName = 'Pirmais ceturksnis';
+        icon = 'brightness_4';
+      } else if (phaseCycle < 0.47) {
+        phaseName = 'Augošs mēness';
+        icon = 'brightness_5';
+      } else if (phaseCycle < 0.53) {
+        phaseName = 'Pilnmēness';
+        icon = 'brightness_1';
+      } else if (phaseCycle < 0.72) {
+        phaseName = 'Dilstošs mēness';
+        icon = 'brightness_5';
+      } else if (phaseCycle < 0.78) {
+        phaseName = 'Pēdējais ceturksnis';
+        icon = 'brightness_4';
+      } else {
+        phaseName = 'Vecs mēness';
+        icon = 'brightness_2';
+      }
+
+      // Dienas līdz nākamajam pilnmēnesim (phaseCycle = 0.5)
+      let daysToFull;
+      if (phaseCycle <= 0.5) {
+        daysToFull = (0.5 - phaseCycle) * synodicMonth;
+      } else {
+        daysToFull = (1.5 - phaseCycle) * synodicMonth;
+      }
+
+      const illumination = Math.round((1 - Math.abs(phaseCycle - 0.5) * 2) * 100);
+
+      const nameEl = document.getElementById('moonPhaseName');
+      const countEl = document.getElementById('moonFullCountdown');
+      const iconEl = document.getElementById('moonIcon');
+
+      if (nameEl) nameEl.textContent = `${phaseName} (${illumination}%)`;
+      if (iconEl) iconEl.textContent = icon;
+      
+      if (countEl) {
+        if (Math.round(daysToFull) === 0) {
+          countEl.textContent = 'Pilnmēness šodien!';
+        } else if (Math.round(daysToFull) === 1) {
+          countEl.textContent = 'Pilnmēness rīt';
+        } else {
+          countEl.textContent = `Pilnmēness pēc ${Math.round(daysToFull)} d.`;
+        }
+      }
+    }
+
+    /** Ziemeļblāzmas varbūtība no NOAA Space Weather Prediction Center (rāda TIKAI ja Kp > 5) */
+    async function fetchAuroraForecast() {
+      const pillEl = document.getElementById('auroraPill');
+      const statusEl = document.getElementById('auroraStatus');
+      const kpEl = document.getElementById('auroraKp');
+      const iconEl = document.getElementById('auroraIcon');
+
+      try {
+        const res = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
+        if (!res.ok) throw new Error('NOAA unavailable');
+        const data = await res.json();
+        
+        // Pēdējā rinda masīvā: [time_tag, Kp, a_running, station_count]
+        const latest = data[data.length - 1];
+        const kp = parseFloat(latest[1]);
+
+        // Rādām kartīti TIKAI tad, ja Kp ir lielāks par 5
+        if (kp > 5) {
+          if (pillEl) pillEl.style.display = 'flex';
+          if (kpEl) kpEl.textContent = `Kp indekss: ${kp.toFixed(1)} / 9`;
+          if (iconEl) iconEl.textContent = 'auto_awesome';
+          if (statusEl) {
+            statusEl.textContent = kp >= 6 ? 'Liela iespēja! (G2+ vētra)' : 'Iespējama! (G1 vētra)';
+            statusEl.style.color = kp >= 6 ? '#1b5e20' : '#2e7d32';
+          }
+        } else {
+          // Ja Kp nav lielāks par 5, kartīti pilnībā paslēpjam
+          if (pillEl) pillEl.style.display = 'none';
+        }
+      } catch (err) {
+        if (pillEl) pillEl.style.display = 'none';
+      }
     }
 
     // Inicializācija
