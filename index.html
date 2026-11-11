@@ -734,14 +734,15 @@
       }
 
       const precipPill = document.getElementById('currentPrecipPill');
-      if (currentProb > 0 || c.precipitation > 0) {
+      const isRainingNow = c.precipitation > 0 || c.snowfall > 0;
+      if (isRainingNow) {
         if (precipPill) precipPill.style.display = 'flex';
         const precipText = c.snowfall > 0 ? `${c.snowfall} cm sniegs` : `${c.precipitation.toFixed(1)} mm`;
         if (precipEl) precipEl.textContent = precipText;
         if (precipProbEl) precipProbEl.textContent = `Varbūtība: ${currentProb}%`;
         if (precipIconEl) precipIconEl.textContent = (c.snowfall > 0 || wmo.isSnow) ? 'ac_unit' : 'water_drop';
       } else {
-        // Paslēpj nokrišņu kartīti, ja varbūtība ir 0%
+        // Paslēpj nokrišņu kartīti, ja šobrīd nelīst
         if (precipPill) precipPill.style.display = 'none';
       }
     }
@@ -790,10 +791,10 @@
           <span class="hour-time">${isCurrentHour ? 'Tagad' : itemDate.getHours() + ':00'}</span>
           <span class="material-symbols-outlined" style="font-size: 26px;">${wmo.icon}</span>
           <span class="hour-temp">${temp > 0 ? '+' : ''}${temp}°</span>
-          ${h.precipitation_probability[i] > 0 ? `
+          ${(h.precipitation[i] > 0 || (wmo.isSnow || [51,53,55,61,63,65,66,67,80,81,82,85,86,95,96,99].includes(h.weather_code[i])) && h.precipitation_probability[i] >= 30) ? `
           <span class="hour-precip">
             <span class="material-symbols-outlined" style="font-size: 13px;">${wmo.isSnow ? 'ac_unit' : 'water_drop'}</span>
-            ${h.precipitation_probability[i]}%
+            ${h.precipitation_probability[i]}%${h.precipitation[i] > 0 ? ` (${h.precipitation[i].toFixed(1)}mm)` : ''}
           </span>` : ''}
           <span class="hour-wind">
             <span class="material-symbols-outlined wind-icon" style="transform: rotate(${h.wind_direction_10m[i]}deg);">south</span>
@@ -828,6 +829,10 @@
         card.className = `day-card ${selectedDateString === dateIsoStr ? 'active-day' : ''}`;
         card.onclick = () => selectDay(dateIsoStr, card);
 
+        // Rāda lietu TIKAI tad, ja tajā dienā kādā no stundām reāli būs nokrišņi (vismaz 0.1 mm)
+        const hasPrecip = d.precipitation_sum[i] >= 0.1;
+        const precipText = hasPrecip ? `(${d.precipitation_sum[i].toFixed(1)} mm)` : '';
+
         card.innerHTML = `
           <div>
             <div class="day-name">${dayName}</div>
@@ -835,9 +840,9 @@
           </div>
           <span class="material-symbols-outlined" style="font-size: 28px; color: var(--md-sys-color-primary);">${wmo.icon}</span>
           <div class="day-weather-desc">
-            <span class="precip-badge" style="${(d.precipitation_probability_max[i] > 0 || d.precipitation_sum[i] > 0) ? '' : 'color: var(--md-sys-color-on-surface-variant); font-weight: normal;'}">
-              <span class="material-symbols-outlined" style="font-size: 13px;">${(d.precipitation_probability_max[i] > 0 || d.precipitation_sum[i] > 0) ? (wmo.isSnow ? 'ac_unit' : 'water_drop') : 'check_circle'}</span>
-              ${wmo.desc} ${(d.precipitation_probability_max[i] > 0 || d.precipitation_sum[i] > 0) ? `(${d.precipitation_probability_max[i]}%, ${d.precipitation_sum[i].toFixed(1)} mm)` : ''}
+            <span class="precip-badge" style="${hasPrecip ? '' : 'color: var(--md-sys-color-on-surface-variant); font-weight: normal;'}">
+              ${hasPrecip ? `<span class="material-symbols-outlined" style="font-size: 13px;">${wmo.isSnow ? 'ac_unit' : 'water_drop'}</span>` : ''}
+              ${wmo.desc} ${precipText}
             </span>
             <span class="wind-detail">
               <span class="material-symbols-outlined" style="font-size: 13px; transform: rotate(${d.wind_direction_10m_dominant[i]}deg);">south</span>
