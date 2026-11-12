@@ -556,7 +556,18 @@
             </div>
           </div>
         </div>
-      </div></div>
+
+        <div class="stat-pill" id="seaTempPill" style="display: none;">
+          <span class="material-symbols-outlined">waves</span>
+          <div class="stat-info">
+            <div class="stat-label">Jūras ūdens</div>
+            <div class="stat-value">
+              <span id="seaTempValue">-- °C</span>
+              <span class="stat-sub">Rīgas līcis, Saulkrasti</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Dinamisks stundu virsraksts ar iespēju atgriezties pie šodienas -->
@@ -631,6 +642,8 @@
       document.getElementById('selectedCitySub').textContent = CITIES[cityKey].sub;
 
       selectedDateString = null;
+      const seaPill = document.getElementById('seaTempPill');
+      if (seaPill) seaPill.style.display = (cityKey === 'saulkrasti') ? 'flex' : 'none';
       fetchWeatherData();
     }
 
@@ -687,6 +700,7 @@
         renderHourly();
         calculateMoonPhase();
         fetchAuroraForecast();
+        fetchSeaTemperature();
 
         const now = new Date();
         const timeEl = document.getElementById('updateTime');
@@ -982,6 +996,36 @@
           }
         } else {
           // Ja Kp nav lielāks par 5, kartīti pilnībā paslēpjam
+          if (pillEl) pillEl.style.display = 'none';
+        }
+      } catch (err) {
+        if (pillEl) pillEl.style.display = 'none';
+      }
+    }
+
+
+    /** Jūras ūdens temperatūra pie Saulkrastiem (Open-Meteo Marine API) */
+    async function fetchSeaTemperature() {
+      const pillEl = document.getElementById('seaTempPill');
+      const valEl = document.getElementById('seaTempValue');
+
+      if (currentCityKey !== 'saulkrasti') {
+        if (pillEl) pillEl.style.display = 'none';
+        return;
+      }
+
+      if (pillEl) pillEl.style.display = 'flex';
+
+      try {
+        // Koordinātas piekrastes ūdeņos pretim Saulkrastiem (57.26°N, 24.38°E)
+        const res = await fetch('https://marine-api.open-meteo.com/v1/marine?latitude=57.26&longitude=24.38&current=sea_surface_temperature');
+        if (!res.ok) throw new Error('Marine API error');
+        const data = await res.json();
+
+        if (data && data.current && typeof data.current.sea_surface_temperature === 'number') {
+          const temp = data.current.sea_surface_temperature;
+          if (valEl) valEl.textContent = `${temp > 0 ? '+' : ''}${temp.toFixed(1)} °C`;
+        } else {
           if (pillEl) pillEl.style.display = 'none';
         }
       } catch (err) {
