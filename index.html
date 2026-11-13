@@ -224,23 +224,42 @@
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      margin-top: 20px;
+      margin-top: 16px;
     }
 
     .stat-pill {
       background-color: var(--md-sys-color-surface-container-lowest);
       border-radius: var(--md-sys-shape-corner-large);
-      padding: 14px 16px;
+      padding: 13px 15px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 11px;
+    }
+
+    /* Ja pēdējā kartīte ir nepāra (piem. 3. vai 5.), izstiepjam pa visu platumu */
+    .stat-pill.full-span {
+      grid-column: 1 / -1;
+      justify-content: space-between;
+    }
+
+    .stat-pill.full-span .stat-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 1;
+      gap: 8px;
+    }
+
+    .stat-pill.full-span .stat-value {
+      align-items: flex-end;
+      text-align: right;
     }
 
     .stat-pill .material-symbols-outlined {
       color: var(--md-sys-color-primary);
-      font-size: 26px;
+      font-size: 28px;
     }
 
     .stat-info {
@@ -248,22 +267,44 @@
     }
 
     .stat-label {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--md-sys-color-on-surface-variant);
       font-weight: 500;
+      margin-bottom: 2px;
     }
 
     .stat-value {
-      font-size: 15px;
+      font-size: 19px;
       font-weight: 700;
+      line-height: 1.2;
       display: flex;
       flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-pill.full-span .stat-value {
+      font-size: 16px;
+    }
+
+    .wind-inline {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .wind-dir-code {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
     }
 
     .stat-sub {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 500;
-      color: var(--md-sys-color-outline);
+      line-height: 1.2;
+      color: var(--md-sys-color-on-surface);
+      white-space: nowrap;
     }
 
     .section-header-wrap {
@@ -288,9 +329,14 @@
       font-weight: 600;
       color: var(--md-sys-color-primary);
       background: var(--md-sys-color-primary-container);
-      padding: 4px 10px;
+      padding: 6px 14px;
       border-radius: var(--md-sys-shape-corner-full);
       display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      white-space: nowrap;
+      flex-shrink: 0;
       cursor: pointer;
     }
 
@@ -374,9 +420,9 @@
     .day-card {
       background-color: var(--md-sys-color-surface-container);
       border-radius: var(--md-sys-shape-corner-large);
-      padding: 14px 16px;
+      padding: 13px 14px;
       display: grid;
-      grid-template-columns: 88px 40px 1fr auto;
+      grid-template-columns: 94px 32px minmax(0, 1fr) auto;
       align-items: center;
       gap: 12px;
       border: 1px solid var(--md-sys-color-outline-variant);
@@ -434,17 +480,22 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 600;
       color: #0077c2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .wind-detail {
-      font-size: 11px;
-      color: var(--md-sys-color-outline);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface-variant);
       display: flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
     }
 
     .material-symbols-outlined {
@@ -510,7 +561,7 @@
       </div>
 
       <div class="weather-summary" id="currentWeatherDesc">Meklē datus...</div>
-      <div class="feels-like">Izjūtu temperatūra: <strong id="currentApparentTemp">--°C</strong></div>
+      <div class="feels-like">Izjūtams kā <strong id="currentApparentTemp">--°</strong></div>
 
       <div class="stats-grid">
         <div class="stat-pill">
@@ -518,8 +569,20 @@
           <div class="stat-info">
             <div class="stat-label">Vējš</div>
             <div class="stat-value">
-              <span id="currentWindSpeed">-- m/s</span>
-              <span class="stat-sub" id="currentWindDir">--</span>
+              <span class="wind-inline">
+                <span id="currentWindSpeed">--</span>
+                <span class="wind-dir-code" id="currentWindDir">--</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-pill" id="seaTempPill" style="display: none;">
+          <span class="material-symbols-outlined">waves</span>
+          <div class="stat-info">
+            <div class="stat-label">Jūras ūdens</div>
+            <div class="stat-value">
+              <span id="seaTempValue">-- °C</span>
             </div>
           </div>
         </div>
@@ -547,23 +610,15 @@
         </div>
 
         <div class="stat-pill">
-          <span class="material-symbols-outlined" id="moonIcon">brightness_medium</span>
+          <svg id="moonSvgIcon" width="26" height="26" viewBox="0 0 26 26" style="flex-shrink: 0;">
+            <circle cx="13" cy="13" r="10" fill="var(--md-sys-color-primary-container)" stroke="var(--md-sys-color-primary)" stroke-width="1.6"/>
+            <path id="moonLitPath" d="" fill="var(--md-sys-color-primary)"/>
+          </svg>
           <div class="stat-info">
-            <div class="stat-label">Mēness fāze</div>
+            <div class="stat-label">Mēness</div>
             <div class="stat-value">
               <span id="moonPhaseName">Ielādē...</span>
               <span class="stat-sub" id="moonFullCountdown">Pilnmēness: --</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-pill" id="seaTempPill" style="display: none;">
-          <span class="material-symbols-outlined">waves</span>
-          <div class="stat-info">
-            <div class="stat-label">Jūras ūdens</div>
-            <div class="stat-value">
-              <span id="seaTempValue">-- °C</span>
-              <span class="stat-sub">Rīgas līcis, Saulkrasti</span>
             </div>
           </div>
         </div>
@@ -589,7 +644,7 @@
 
     <div class="section-title" style="margin: 8px 4px 4px;">
       <span class="material-symbols-outlined">calendar_month</span>
-      Nākamās 7 dienas (pieskaries dienai)
+      Nākamās 7 dienas
     </div>
 
     <section class="daily-list" id="dailyList">
@@ -644,6 +699,7 @@
       selectedDateString = null;
       const seaPill = document.getElementById('seaTempPill');
       if (seaPill) seaPill.style.display = (cityKey === 'saulkrasti') ? 'flex' : 'none';
+      updateStatsGridLayout();
       fetchWeatherData();
     }
 
@@ -665,17 +721,17 @@
     /** @param {number} code */
     function decodeWMO(code) {
       if (code === 0) return { desc: 'Skaidrs', icon: 'clear_day', isSnow: false };
-      if (code === 1) return { desc: 'Lielākoties skaidrs', icon: 'partly_cloudy_day', isSnow: false };
-      if (code === 2) return { desc: 'Daļēji mākoņains', icon: 'partly_cloudy_day', isSnow: false };
+      if (code === 1) return { desc: 'Pārsvarā skaidrs', icon: 'partly_cloudy_day', isSnow: false };
+      if (code === 2) return { desc: 'Mākoņains', icon: 'partly_cloudy_day', isSnow: false };
       if (code === 3) return { desc: 'Apmācies', icon: 'cloud', isSnow: false };
       if ([45, 48].includes(code)) return { desc: 'Migla', icon: 'foggy', isSnow: false };
-      if ([51, 53, 55].includes(code)) return { desc: 'Smidzināšana', icon: 'rainy', isSnow: false };
+      if ([51, 53, 55].includes(code)) return { desc: 'Lietus', icon: 'rainy', isSnow: false };
       if ([61, 63, 65].includes(code)) return { desc: 'Lietus', icon: 'rainy', isSnow: false };
-      if ([66, 67].includes(code)) return { desc: 'Sasalstošs lietus', icon: 'ac_unit', isSnow: false };
+      if ([66, 67].includes(code)) return { desc: 'Atkala', icon: 'ac_unit', isSnow: false };
       if ([71, 73, 75, 77].includes(code)) return { desc: 'Sniegs', icon: 'ac_unit', isSnow: true };
-      if ([80, 81, 82].includes(code)) return { desc: 'Lietusgāzes', icon: 'rainy', isSnow: false };
-      if ([85, 86].includes(code)) return { desc: 'Sniegputenis / Slapjdranķis', icon: 'weather_snowy', isSnow: true };
-      if ([95, 96, 99].includes(code)) return { desc: 'Pērkona negaiss', icon: 'thunderstorm', isSnow: false };
+      if ([80, 81, 82].includes(code)) return { desc: 'Lietus', icon: 'rainy', isSnow: false };
+      if ([85, 86].includes(code)) return { desc: 'Sniegs', icon: 'weather_snowy', isSnow: true };
+      if ([95, 96, 99].includes(code)) return { desc: 'Negaiss', icon: 'thunderstorm', isSnow: false };
       return { desc: 'Mākoņains', icon: 'cloud', isSnow: false };
     }
 
@@ -688,7 +744,7 @@
       const city = CITIES[currentCityKey];
 
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant&wind_speed_unit=ms&timezone=auto&forecast_days=8`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_direction_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant&wind_speed_unit=ms&timezone=auto&forecast_days=8`;
         
         const response = await fetch(url);
         const data = await response.json();
@@ -701,6 +757,7 @@
         calculateMoonPhase();
         fetchAuroraForecast();
         fetchSeaTemperature();
+        updateStatsGridLayout();
 
         const now = new Date();
         const timeEl = document.getElementById('updateTime');
@@ -728,8 +785,10 @@
 
       const roundedTemp = Math.round(c.temperature_2m);
       if (tempEl) tempEl.textContent = `${roundedTemp > 0 ? '+' : ''}${roundedTemp}°`;
-      if (appTempEl) appTempEl.textContent = `${c.apparent_temperature > 0 ? '+' : ''}${Math.round(c.apparent_temperature)}°C`;
-      if (descEl) descEl.textContent = wmo.desc;
+      if (appTempEl) appTempEl.textContent = `${c.apparent_temperature > 0 ? '+' : ''}${Math.round(c.apparent_temperature)}°`;
+      const isFogOrLowVis = [45, 48].includes(c.weather_code) || (typeof c.visibility === 'number' && c.visibility < 1000);
+      const visText = (isFogOrLowVis && typeof c.visibility === 'number') ? ` · ${Math.round(c.visibility / 10) * 10} m` : '';
+      if (descEl) descEl.textContent = `${wmo.desc}${visText}`;
       if (iconEl) iconEl.textContent = wmo.icon;
 
       if ('setAppBadge' in navigator) {
@@ -737,8 +796,8 @@
       }
 
       const wind = getWindDirection(c.wind_direction_10m);
-      if (windSpeedEl) windSpeedEl.textContent = `${c.wind_speed_10m.toFixed(1)} m/s`;
-      if (windDirEl) windDirEl.textContent = `${wind.name} (${wind.full})`;
+      if (windSpeedEl) windSpeedEl.textContent = c.wind_speed_10m.toFixed(1);
+      if (windDirEl) windDirEl.textContent = wind.name;
 
       // Nosakām šī brīža nokrišņu varbūtību no stundu datiem
       let currentProb = 0;
@@ -775,13 +834,13 @@
       const isViewingToday = !selectedDateString || selectedDateString === todayDateStr;
 
       if (isViewingToday) {
-        if (titleText) titleText.textContent = 'Šodien pa stundām (atlikušās)';
+        if (titleText) titleText.textContent = 'Šodien pa stundām';
         if (resetBtn) resetBtn.style.display = 'none';
       } else {
         const selDate = new Date(selectedDateString);
         const dayLabel = weekdays[selDate.getDay()];
-        if (titleText) titleText.textContent = `${dayLabel} pa stundām (24h)`;
-        if (resetBtn) resetBtn.style.display = 'block';
+        if (titleText) titleText.textContent = `${dayLabel} pa stundām`;
+        if (resetBtn) resetBtn.style.display = 'inline-flex';
       }
 
       const targetDateStr = isViewingToday ? todayDateStr : selectedDateString;
@@ -805,14 +864,15 @@
           <span class="hour-time">${isCurrentHour ? 'Tagad' : itemDate.getHours() + ':00'}</span>
           <span class="material-symbols-outlined" style="font-size: 26px;">${wmo.icon}</span>
           <span class="hour-temp">${temp > 0 ? '+' : ''}${temp}°</span>
-          ${(h.precipitation[i] > 0 || (wmo.isSnow || [51,53,55,61,63,65,66,67,80,81,82,85,86,95,96,99].includes(h.weather_code[i])) && h.precipitation_probability[i] >= 30) ? `
+          ${([45, 48].includes(h.weather_code[i]) && h.visibility && typeof h.visibility[i] === 'number') ? `
+          <span class="hour-precip" style="color: var(--md-sys-color-on-surface);">
+            ${Math.round(h.visibility[i] / 10) * 10} m
+          </span>` : (h.precipitation[i] > 0 || (wmo.isSnow || [51,53,55,61,63,65,66,67,80,81,82,85,86,95,96,99].includes(h.weather_code[i])) && h.precipitation_probability[i] >= 30) ? `
           <span class="hour-precip">
-            <span class="material-symbols-outlined" style="font-size: 13px;">${wmo.isSnow ? 'ac_unit' : 'water_drop'}</span>
             ${h.precipitation_probability[i]}%${h.precipitation[i] > 0 ? ` (${h.precipitation[i].toFixed(1)}mm)` : ''}
           </span>` : ''}
           <span class="hour-wind">
-            <span class="material-symbols-outlined wind-icon" style="transform: rotate(${h.wind_direction_10m[i]}deg);">south</span>
-            ${h.wind_speed_10m[i].toFixed(1)} ${wind.name}
+            ${h.wind_speed_10m[i].toFixed(1)} <strong style="color: var(--md-sys-color-on-surface);">${wind.name}</strong>
           </span>
         `;
         list.appendChild(item);
@@ -845,22 +905,32 @@
 
         // Rāda lietu TIKAI tad, ja tajā dienā kādā no stundām reāli būs nokrišņi (vismaz 0.1 mm)
         const hasPrecip = d.precipitation_sum[i] >= 0.1;
-        const precipText = hasPrecip ? `(${d.precipitation_sum[i].toFixed(1)} mm)` : '';
+        let extraDetailText = hasPrecip ? `· ${d.precipitation_sum[i].toFixed(1)} mm` : '';
+        if ([45, 48].includes(d.weather_code[i]) && cachedHourlyData && cachedHourlyData.visibility) {
+          let minVis = Infinity;
+          for (let hIdx = 0; hIdx < cachedHourlyData.time.length; hIdx++) {
+            if (cachedHourlyData.time[hIdx].startsWith(dateIsoStr) && typeof cachedHourlyData.visibility[hIdx] === 'number') {
+              if (cachedHourlyData.visibility[hIdx] < minVis) minVis = cachedHourlyData.visibility[hIdx];
+            }
+          }
+          if (minVis < Infinity) {
+            extraDetailText = `· ${Math.round(minVis / 10) * 10} m`;
+          }
+        }
+        const shortDesc = wmo.desc === 'Sniegputenis / Slapjdranķis' ? 'Slapjdranķis' : wmo.desc;
 
         card.innerHTML = `
           <div>
             <div class="day-name">${dayName}</div>
             <div class="day-date">${dateStr}</div>
           </div>
-          <span class="material-symbols-outlined" style="font-size: 28px; color: var(--md-sys-color-primary);">${wmo.icon}</span>
+          <span class="material-symbols-outlined" style="font-size: 26px; color: var(--md-sys-color-primary);">${wmo.icon}</span>
           <div class="day-weather-desc">
-            <span class="precip-badge" style="${hasPrecip ? '' : 'color: var(--md-sys-color-on-surface-variant); font-weight: normal;'}">
-              ${hasPrecip ? `<span class="material-symbols-outlined" style="font-size: 13px;">${wmo.isSnow ? 'ac_unit' : 'water_drop'}</span>` : ''}
-              ${wmo.desc} ${precipText}
+            <span class="precip-badge" style="${hasPrecip ? 'color: var(--md-sys-color-primary);' : 'color: var(--md-sys-color-on-surface-variant); font-weight: 500;'}">
+              <span>${shortDesc} ${extraDetailText}</span>
             </span>
             <span class="wind-detail">
-              <span class="material-symbols-outlined" style="font-size: 13px; transform: rotate(${d.wind_direction_10m_dominant[i]}deg);">south</span>
-              ${d.wind_speed_10m_max[i].toFixed(1)} m/s ${wind.name} (${wind.full})
+              ${d.wind_speed_10m_max[i].toFixed(1)} <strong style="color: var(--md-sys-color-on-surface);">${wind.name}</strong>
             </span>
           </div>
           <div class="day-temp-range">
@@ -916,28 +986,28 @@
       let icon = 'bedtime';
       
       if (phaseCycle < 0.03 || phaseCycle >= 0.97) {
-        phaseName = 'Jauns mēness';
+        phaseName = 'Jauns';
         icon = 'radio_button_unchecked';
       } else if (phaseCycle < 0.22) {
-        phaseName = 'Augošs sirpis';
+        phaseName = 'Augošs';
         icon = 'brightness_3';
       } else if (phaseCycle < 0.28) {
-        phaseName = 'Pirmais ceturksnis';
+        phaseName = 'Pusmēness';
         icon = 'brightness_4';
       } else if (phaseCycle < 0.47) {
-        phaseName = 'Augošs mēness';
+        phaseName = 'Augošs';
         icon = 'brightness_5';
       } else if (phaseCycle < 0.53) {
         phaseName = 'Pilnmēness';
         icon = 'brightness_1';
       } else if (phaseCycle < 0.72) {
-        phaseName = 'Dilstošs mēness';
+        phaseName = 'Dilstošs';
         icon = 'brightness_5';
       } else if (phaseCycle < 0.78) {
-        phaseName = 'Pēdējais ceturksnis';
+        phaseName = 'Pusmēness';
         icon = 'brightness_4';
       } else {
-        phaseName = 'Vecs mēness';
+        phaseName = 'Dilstošs';
         icon = 'brightness_2';
       }
 
@@ -949,23 +1019,52 @@
         daysToFull = (1.5 - phaseCycle) * synodicMonth;
       }
 
-      const illumination = Math.round((1 - Math.abs(phaseCycle - 0.5) * 2) * 100);
+      // Precīzs apgaismotās daļas platums (0.0 līdz 1.0)
+      const theta = phaseCycle * 2 * Math.PI;
+      const illumFraction = (1 - Math.cos(theta)) / 2;
 
       const nameEl = document.getElementById('moonPhaseName');
       const countEl = document.getElementById('moonFullCountdown');
-      const iconEl = document.getElementById('moonIcon');
+      const litPathEl = document.getElementById('moonLitPath');
 
-      if (nameEl) nameEl.textContent = `${phaseName} (${illumination}%)`;
-      if (iconEl) iconEl.textContent = icon;
+      const dFull = Math.round(daysToFull);
+      if (nameEl) {
+        nameEl.style.fontSize = '14px';
+        nameEl.style.fontWeight = '500';
+        nameEl.style.color = 'var(--md-sys-color-on-surface)';
+        if (dFull === 0) {
+          nameEl.innerHTML = 'Pilnmēness · <strong>šodien</strong>';
+        } else if (dFull === 1) {
+          nameEl.innerHTML = 'Pilnmēness · <strong>rīt</strong>';
+        } else {
+          nameEl.innerHTML = `Pilnmēness · <strong>${dFull}d</strong>`;
+        }
+      }
+
+      // Dinamiski uzzīmē zilā lauka platumu Mēness ikonā atbilstoši fāzei
+      if (litPathEl) {
+        const r = 10;
+        const cx = 13, cy = 13;
+        if (illumFraction <= 0.005) {
+          litPathEl.setAttribute('d', '');
+        } else if (illumFraction >= 0.995) {
+          litPathEl.setAttribute('d', `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`);
+        } else {
+          const rx = Math.abs(Math.cos(theta)) * r;
+          const isWaxing = phaseCycle <= 0.5;
+          const outerSweep = isWaxing ? 1 : 0;
+          const innerSweep = isWaxing
+            ? (illumFraction < 0.5 ? 0 : 1)
+            : (illumFraction > 0.5 ? 0 : 1);
+          litPathEl.setAttribute(
+            'd',
+            `M ${cx} ${cy - r} A ${r} ${r} 0 0 ${outerSweep} ${cx} ${cy + r} A ${rx.toFixed(2)} ${r} 0 0 ${innerSweep} ${cx} ${cy - r} Z`
+          );
+        }
+      }
       
       if (countEl) {
-        if (Math.round(daysToFull) === 0) {
-          countEl.textContent = 'Pilnmēness šodien!';
-        } else if (Math.round(daysToFull) === 1) {
-          countEl.textContent = 'Pilnmēness rīt';
-        } else {
-          countEl.textContent = `Pilnmēness pēc ${Math.round(daysToFull)} d.`;
-        }
+        countEl.textContent = phaseName;
       }
     }
 
@@ -1001,6 +1100,7 @@
       } catch (err) {
         if (pillEl) pillEl.style.display = 'none';
       }
+      updateStatsGridLayout();
     }
 
 
@@ -1030,6 +1130,20 @@
         }
       } catch (err) {
         if (pillEl) pillEl.style.display = 'none';
+      }
+      updateStatsGridLayout();
+    }
+
+
+    function updateStatsGridLayout() {
+      const grid = document.querySelector('.stats-grid');
+      if (!grid) return;
+      const pills = Array.from(grid.querySelectorAll('.stat-pill'));
+      pills.forEach(p => p.classList.remove('full-span'));
+      
+      const visiblePills = pills.filter(p => p.style.display !== 'none');
+      if (visiblePills.length % 2 === 1 && visiblePills.length > 0) {
+        visiblePills[visiblePills.length - 1].classList.add('full-span');
       }
     }
 
