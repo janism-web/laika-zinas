@@ -33,5 +33,40 @@
       "type": "image/png",
       "purpose": "monochrome"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Saulkrasti",
+      "short_name": "Saulkrasti",
+      "url": "./index.html?city=saulkrasti",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Rīgas centrs",
+      "short_name": "Centrs",
+      "url": "./index.html?city=centrs",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Vecmīlgrāvis",
+      "short_name": "Vecmīlgrāvis",
+      "url": "./index.html?city=vecmilgravis",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }

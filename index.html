@@ -138,12 +138,37 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
+    .header-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .webcam-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--md-sys-shape-corner-full);
+      background: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .webcam-btn:active {
+      transform: scale(0.94);
+    }
+
     .status-badge {
       font-size: 13px;
       font-weight: 500;
       background: var(--md-sys-color-secondary-container);
       color: var(--md-sys-color-on-secondary-container);
-      padding: 6px 14px;
+      padding: 7px 14px;
       border-radius: var(--md-sys-shape-corner-full);
       display: inline-flex;
       align-items: center;
@@ -166,6 +191,62 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+    }
+
+    /* Smart contextual driver/coastal alert pill */
+    .smart-alert {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      border-radius: var(--md-sys-shape-corner-large);
+      background-color: #fff3e0;
+      color: #5d3a00;
+      border: 1px solid #ffcc80;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .smart-alert {
+        background-color: #3a2810;
+        color: #ffddb3;
+        border-color: #6b4c21;
+      }
+    }
+
+    .smart-alert .material-symbols-outlined {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Sunrise / Sunset marker inside hourly scroll */
+    .hour-item.sun-event {
+      flex: 0 0 84px;
+      background: var(--md-sys-color-surface-container-high);
+      border: 1px dashed var(--md-sys-color-outline-variant);
+      justify-content: center;
+    }
+
+    .hour-item.sun-event .sun-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    /* Pull-to-refresh subtle indicator */
+    .ptr-indicator {
+      height: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--md-sys-color-primary);
+      font-size: 12px;
+      font-weight: 600;
+      gap: 6px;
+      transition: height 0.2s ease;
     }
 
     .hero-card {
@@ -399,12 +480,19 @@
     }
 
     .hour-wind {
-      font-size: 11px;
-      display: flex;
-      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: baseline;
       gap: 3px;
-      color: var(--md-sys-color-on-surface-variant);
+      color: var(--md-sys-color-on-surface);
       margin-top: 2px;
+    }
+
+    .hour-wind .wind-dir-letter {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
     }
 
     .wind-icon {
@@ -490,13 +578,19 @@
     }
 
     .wind-detail {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--md-sys-color-on-surface-variant);
-      display: flex;
-      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+      display: inline-flex;
+      align-items: baseline;
       gap: 4px;
       white-space: nowrap;
+    }
+
+    .wind-detail .wind-dir-letter {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
     }
 
     .material-symbols-outlined {
@@ -526,9 +620,14 @@
       </div>
       <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);" id="selectedCitySub">Piekrastes josla, Vidzeme</span>
     </div>
-    <div class="status-badge" id="refreshBtn" onclick="fetchWeatherData()">
-      <span class="material-symbols-outlined" id="refreshIcon" style="font-size: 16px;">autorenew</span>
-      <span id="updateTime">Ielādē...</span>
+    <div class="header-actions">
+      <a class="webcam-btn" id="webcamBtn" href="https://www.visitsaulkrasti.lv/saulkrasti-webkamera/" target="_blank" rel="noopener noreferrer" title="Saulkrastu pludmales kamera" aria-label="Saulkrastu pludmales kamera">
+        <span class="material-symbols-outlined" style="font-size: 18px;">videocam</span>
+      </a>
+      <div class="status-badge" id="refreshBtn" onclick="fetchWeatherData()">
+        <span class="material-symbols-outlined" id="refreshIcon" style="font-size: 16px;">autorenew</span>
+        <span id="updateTime">Ielādē...</span>
+      </div>
     </div>
   </header>
 
@@ -548,9 +647,20 @@
     </button>
   </div>
 
+  <div class="ptr-indicator" id="ptrIndicator">
+    <span class="material-symbols-outlined" style="font-size: 18px;">arrow_downward</span>
+    <span id="ptrText">Velc uz leju, lai atjaunotu</span>
+  </div>
+
   <main class="container">
+    <!-- Dinamisks brīdinājums (melnā ledus risks, stipras brāzmas, bīstama migla) -->
+    <div class="smart-alert" id="smartAlertBanner">
+      <span class="material-symbols-outlined" id="smartAlertIcon">warning</span>
+      <span id="smartAlertText"></span>
+    </div>
+
     <!-- Pašreizējais laiks -->
-    <section class="hero-card">
+    <section class="hero-card" id="heroSwipeCard">
       <div class="hero-badge">
         <span class="material-symbols-outlined" style="font-size: 18px;">sensors</span>
         Tiešsaistes dati
@@ -681,15 +791,16 @@
       }
     };
 
-    let currentCityKey = 'saulkrasti';
+    const CITY_ORDER = ['saulkrasti', 'centrs', 'vecmilgravis'];
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramCity = urlParams.get('city');
+    const savedCity = localStorage.getItem('laika_zinas_city');
+    let currentCityKey = (paramCity && CITIES[paramCity]) ? paramCity : ((savedCity && CITIES[savedCity]) ? savedCity : 'saulkrasti');
     let cachedHourlyData = null;
+    let cachedDailyData = null;
     let selectedDateString = null;
 
-    /** Pārslēdz pilsētu */
-    function switchCity(cityKey) {
-      if (currentCityKey === cityKey) return;
-      currentCityKey = cityKey;
-
+    function applyCityUI(cityKey) {
       document.getElementById('btnSaulkrasti').classList.toggle('active', cityKey === 'saulkrasti');
       document.getElementById('btnCentrs').classList.toggle('active', cityKey === 'centrs');
       document.getElementById('btnVecmilgravis').classList.toggle('active', cityKey === 'vecmilgravis');
@@ -697,9 +808,20 @@
       document.getElementById('selectedCityName').textContent = CITIES[cityKey].name;
       document.getElementById('selectedCitySub').textContent = CITIES[cityKey].sub;
 
-      selectedDateString = null;
       const seaPill = document.getElementById('seaTempPill');
       if (seaPill) seaPill.style.display = (cityKey === 'saulkrasti') ? 'flex' : 'none';
+      const webcamBtn = document.getElementById('webcamBtn');
+      if (webcamBtn) webcamBtn.style.display = (cityKey === 'saulkrasti') ? 'inline-flex' : 'none';
+    }
+
+    /** Pārslēdz pilsētu */
+    function switchCity(cityKey) {
+      if (currentCityKey === cityKey) return;
+      currentCityKey = cityKey;
+      try { localStorage.setItem('laika_zinas_city', cityKey); } catch (e) {}
+
+      applyCityUI(cityKey);
+      selectedDateString = null;
       updateStatsGridLayout();
       fetchWeatherData();
     }
@@ -745,14 +867,16 @@
       const city = CITIES[currentCityKey];
 
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_direction_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant&wind_speed_unit=ms&timezone=auto&forecast_days=8`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant,sunrise,sunset&wind_speed_unit=ms&timezone=auto&forecast_days=8`;
         
         const response = await fetch(url);
         const data = await response.json();
 
         cachedHourlyData = data.hourly;
+        cachedDailyData = data.daily;
 
         renderCurrent(data.current);
+        evaluateSmartAlerts(data.current);
         renderDaily(data.daily);
         renderHourly();
         calculateMoonPhase();
@@ -768,6 +892,35 @@
         if (timeEl) timeEl.textContent = 'Kļūda';
       } finally {
         if (badge) badge.classList.remove('refreshing');
+      }
+    }
+
+    /** Gudrie brīdinājumi (melnā ledus risks, spēcīgas brāzmas, bīstama migla) */
+    function evaluateSmartAlerts(c) {
+      const banner = document.getElementById('smartAlertBanner');
+      const iconEl = document.getElementById('smartAlertIcon');
+      const textEl = document.getElementById('smartAlertText');
+      if (!banner || !iconEl || !textEl) return;
+
+      const temp = c.temperature_2m;
+      const gusts = c.wind_gusts_10m || c.wind_speed_10m;
+      const vis = c.visibility;
+      const isWet = c.precipitation > 0 || [51, 53, 55, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86].includes(c.weather_code);
+
+      if ([66, 67].includes(c.weather_code) || (temp >= -2.5 && temp <= 2.0 && isWet)) {
+        banner.style.display = 'flex';
+        iconEl.textContent = 'ac_unit';
+        textEl.textContent = 'Melnā ledus risks uz ceļa (temperatūra ap 0° un mitrs segums)';
+      } else if (typeof vis === 'number' && vis < 500) {
+        banner.style.display = 'flex';
+        iconEl.textContent = 'foggy';
+        textEl.textContent = `Bieza migla uz ceļa · redzamība ${Math.round(vis / 10) * 10} m`;
+      } else if (gusts >= 15) {
+        banner.style.display = 'flex';
+        iconEl.textContent = 'air';
+        textEl.textContent = `Spēcīgas vēja brāzmas līdz ${gusts.toFixed(1)} m/s`;
+      } else {
+        banner.style.display = 'none';
       }
     }
 
@@ -847,6 +1000,17 @@
       const targetDateStr = isViewingToday ? todayDateStr : selectedDateString;
       let first = true;
 
+      // Atrodam šīs dienas saullēktu un saulrietu
+      let sunriseDate = null;
+      let sunsetDate = null;
+      if (cachedDailyData && cachedDailyData.time && cachedDailyData.sunrise && cachedDailyData.sunset) {
+        const dIdx = cachedDailyData.time.findIndex(t => t.startsWith(targetDateStr));
+        if (dIdx !== -1) {
+          sunriseDate = new Date(cachedDailyData.sunrise[dIdx]);
+          sunsetDate = new Date(cachedDailyData.sunset[dIdx]);
+        }
+      }
+
       for (let i = 0; i < h.time.length; i++) {
         const itemDate = new Date(h.time[i]);
         const itemDateStr = itemDate.toLocaleDateString('en-CA');
@@ -873,10 +1037,35 @@
             ${h.precipitation_probability[i]}%${h.precipitation[i] > 0 ? ` (${h.precipitation[i].toFixed(1)}mm)` : ''}
           </span>` : ''}
           <span class="hour-wind">
-            ${h.wind_speed_10m[i].toFixed(1)} <strong style="color: var(--md-sys-color-on-surface);">${wind.name}</strong>
+            <span>${h.wind_speed_10m[i].toFixed(1)}</span><span class="wind-dir-letter">${wind.name}</span>
           </span>
         `;
         list.appendChild(item);
+
+        // Pēc attiecīgās stundas iestarpinām saullēkta vai saulrieta kartīti
+        if (sunriseDate && sunriseDate.getHours() === itemDate.getHours() && (!isViewingToday || sunriseDate >= now)) {
+          const srTime = sunriseDate.toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' });
+          const srCard = document.createElement('div');
+          srCard.className = 'hour-item sun-event';
+          srCard.innerHTML = `
+            <span class="hour-time">${srTime}</span>
+            <span class="material-symbols-outlined" style="font-size: 24px; color: var(--md-sys-color-primary);">wb_twilight</span>
+            <span class="sun-label">Saullēkts</span>
+          `;
+          list.appendChild(srCard);
+        }
+        if (sunsetDate && sunsetDate.getHours() === itemDate.getHours() && (!isViewingToday || sunsetDate >= now)) {
+          const ssTime = sunsetDate.toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' });
+          const ssCard = document.createElement('div');
+          ssCard.className = 'hour-item sun-event';
+          ssCard.innerHTML = `
+            <span class="hour-time">${ssTime}</span>
+            <span class="material-symbols-outlined" style="font-size: 24px; color: var(--md-sys-color-primary);">nights_stay</span>
+            <span class="sun-label">Saulriets</span>
+          `;
+          list.appendChild(ssCard);
+        }
+
         first = false;
       }
 
@@ -931,7 +1120,7 @@
               <span>${shortDesc} ${extraDetailText}</span>
             </span>
             <span class="wind-detail">
-              ${d.wind_speed_10m_max[i].toFixed(1)} <strong style="color: var(--md-sys-color-on-surface);">${wind.name}</strong>
+              <span>${d.wind_speed_10m_max[i].toFixed(1)}</span><span class="wind-dir-letter">${wind.name}</span>
             </span>
           </div>
           <div class="day-temp-range">
@@ -1149,7 +1338,68 @@
       }
     }
 
+    // Viena pirksta žesti: horizontāls swipe starp pilsētām un pull-to-refresh
+    (function initGestures() {
+      const heroCard = document.getElementById('heroSwipeCard');
+      let startX = 0, startY = 0;
+
+      if (heroCard) {
+        heroCard.addEventListener('touchstart', (e) => {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }, { passive: true });
+
+        heroCard.addEventListener('touchend', (e) => {
+          const dx = e.changedTouches[0].clientX - startX;
+          const dy = e.changedTouches[0].clientY - startY;
+          if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+            const idx = CITY_ORDER.indexOf(currentCityKey);
+            if (dx < 0 && idx < CITY_ORDER.length - 1) {
+              switchCity(CITY_ORDER[idx + 1]);
+            } else if (dx > 0 && idx > 0) {
+              switchCity(CITY_ORDER[idx - 1]);
+            }
+          }
+        }, { passive: true });
+      }
+
+      // Pull-to-refresh augšmalā
+      let ptrStartY = 0, pulling = false;
+      const ptrEl = document.getElementById('ptrIndicator');
+      const ptrText = document.getElementById('ptrText');
+
+      window.addEventListener('touchstart', (e) => {
+        if (window.scrollY <= 2) {
+          ptrStartY = e.touches[0].clientY;
+          pulling = true;
+        } else {
+          pulling = false;
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (!pulling || !ptrEl) return;
+        const dy = e.touches[0].clientY - ptrStartY;
+        if (dy > 20 && window.scrollY <= 2) {
+          const h = Math.min(44, (dy - 20) * 0.45);
+          ptrEl.style.height = `${h}px`;
+          if (ptrText) ptrText.textContent = dy > 95 ? 'Atlaid, lai atjaunotu' : 'Velc uz leju, lai atjaunotu';
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', (e) => {
+        if (!pulling || !ptrEl) return;
+        const dy = e.changedTouches[0].clientY - ptrStartY;
+        ptrEl.style.height = '0px';
+        pulling = false;
+        if (dy > 95 && window.scrollY <= 2) {
+          fetchWeatherData();
+        }
+      }, { passive: true });
+    })();
+
     // Inicializācija
+    applyCityUI(currentCityKey);
     fetchWeatherData();
     setInterval(fetchWeatherData, 15 * 60 * 1000);
   </script>
