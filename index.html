@@ -232,10 +232,11 @@
     .stat-pill {
       background-color: var(--md-sys-color-surface-container-lowest);
       border-radius: var(--md-sys-shape-corner-large);
-      padding: 13px 15px;
+      padding: 12px 12px;
       display: flex;
       align-items: center;
-      gap: 11px;
+      gap: 9px;
+      min-width: 0;
     }
 
     /* Ja pēdējā kartīte ir nepāra (piem. 3. vai 5.), izstiepjam pa visu platumu */
@@ -1029,9 +1030,10 @@
 
       const dFull = Math.round(daysToFull);
       if (nameEl) {
-        nameEl.style.fontSize = '14px';
+        nameEl.style.fontSize = '13px';
         nameEl.style.fontWeight = '500';
         nameEl.style.color = 'var(--md-sys-color-on-surface)';
+        nameEl.style.whiteSpace = 'nowrap';
         if (dFull === 0) {
           nameEl.innerHTML = 'Pilnmēness · <strong>šodien</strong>';
         } else if (dFull === 1) {
