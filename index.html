@@ -25,6 +25,17 @@
       --md-sys-color-on-primary: #ffffff;
       --md-sys-color-primary-container: #d2e4ff;
       --md-sys-color-on-primary-container: #001c38;
+      --md-sys-color-secondary-container: #d7e3f8;
+      --md-sys-color-on-secondary-container: #101c2b;
+      --md-sys-color-tertiary-container: #f5d9ff;
+      --md-sys-color-on-tertiary-container: #271430;
+      --md-sys-color-amber-container: #ffdf9e;
+      --md-sys-color-on-amber-container: #261900;
+      --md-sys-color-amber-ink: #7a5900;
+      --md-sys-color-error: #ba1a1a;
+      --md-sys-color-error-container: #ffdad6;
+      --md-sys-color-on-error-container: #410002;
+      --md-sys-color-precip: #00639b;
       --md-sys-color-surface: #f8f9ff;
       --md-sys-color-on-surface: #191c20;
       --md-sys-color-surface-variant: #e1e2ec;
@@ -34,8 +45,6 @@
       --md-sys-color-surface-container-lowest: #ffffff;
       --md-sys-color-outline: #74777f;
       --md-sys-color-outline-variant: #c4c6d0;
-      --md-sys-color-secondary-container: #d7e3f8;
-      --md-sys-color-on-secondary-container: #101c2b;
       --md-sys-shape-corner-extra-large: 28px;
       --md-sys-shape-corner-large: 20px;
       --md-sys-shape-corner-medium: 16px;
@@ -48,6 +57,17 @@
         --md-sys-color-on-primary: #00315e;
         --md-sys-color-primary-container: #004885;
         --md-sys-color-on-primary-container: #d2e4ff;
+        --md-sys-color-secondary-container: #3d4758;
+        --md-sys-color-on-secondary-container: #d7e3f8;
+        --md-sys-color-tertiary-container: #553f5d;
+        --md-sys-color-on-tertiary-container: #f5d9ff;
+        --md-sys-color-amber-container: #5c4300;
+        --md-sys-color-on-amber-container: #ffdf9e;
+        --md-sys-color-amber-ink: #f5be48;
+        --md-sys-color-error: #ffb4ab;
+        --md-sys-color-error-container: #93000a;
+        --md-sys-color-on-error-container: #ffdad6;
+        --md-sys-color-precip: #8ecff8;
         --md-sys-color-surface: #111418;
         --md-sys-color-on-surface: #e1e2e8;
         --md-sys-color-surface-variant: #43474e;
@@ -57,8 +77,6 @@
         --md-sys-color-surface-container-lowest: #0c0e12;
         --md-sys-color-outline: #8d9199;
         --md-sys-color-outline-variant: #43474e;
-        --md-sys-color-secondary-container: #3d4758;
-        --md-sys-color-on-secondary-container: #d7e3f8;
       }
     }
 
@@ -102,26 +120,58 @@
       gap: 6px;
     }
 
-    /* Pilsētu izvēlne */
+    /* Material 3 State Layer helper */
+    .m3-interactive {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .m3-interactive::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    @media (hover: hover) {
+      .m3-interactive:hover::before {
+        opacity: 0.08;
+      }
+    }
+
+    .m3-interactive:active::before {
+      opacity: 0.12;
+    }
+
+    /* Material 3 Segmented Button Group (#1) */
     .city-segmented-control {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      background-color: var(--md-sys-color-surface-container-high);
+      display: flex;
+      align-items: stretch;
+      background-color: transparent;
       border-radius: var(--md-sys-shape-corner-full);
-      padding: 4px;
+      padding: 0;
       margin: 4px 16px 14px;
-      gap: 4px;
-      border: 1px solid var(--md-sys-color-outline-variant);
+      gap: 0;
+      border: 1px solid var(--md-sys-color-outline);
+      overflow: hidden;
     }
 
     .city-btn {
+      position: relative;
+      overflow: hidden;
+      flex: 1 1 auto;
       border: none;
+      border-right: 1px solid var(--md-sys-color-outline);
       background: transparent;
-      color: var(--md-sys-color-on-surface-variant);
+      color: var(--md-sys-color-on-surface);
+      min-height: 44px;
       padding: 10px 8px;
-      border-radius: var(--md-sys-shape-corner-full);
+      border-radius: 0;
       font-family: 'Google Sans', sans-serif;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -129,51 +179,103 @@
       justify-content: center;
       gap: 4px;
       white-space: nowrap;
-      transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+      transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .city-btn:last-child {
+      border-right: none;
+    }
+
+    .city-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .city-btn:active::before {
+      opacity: 0.12;
     }
 
     .city-btn.active {
-      background-color: var(--md-sys-color-surface-container-lowest);
-      color: var(--md-sys-color-primary);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      background-color: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
     }
 
+    /* Accessible 48x48dp Material 3 Touch Targets in Top App Bar (#5) */
     .header-actions {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
       flex-shrink: 0;
     }
 
     .webcam-btn {
-      width: 34px;
-      height: 34px;
+      position: relative;
+      width: 48px;
+      height: 48px;
       border-radius: var(--md-sys-shape-corner-full);
-      background: var(--md-sys-color-secondary-container);
-      color: var(--md-sys-color-on-secondary-container);
+      background: transparent;
+      color: var(--md-sys-color-on-surface-variant);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       text-decoration: none;
       cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease;
     }
 
-    .webcam-btn:active {
-      transform: scale(0.94);
+    .webcam-btn::after {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--md-sys-shape-corner-full);
+      background-color: var(--md-sys-color-secondary-container);
+      z-index: 0;
+      transition: filter 0.15s ease;
+    }
+
+    .webcam-btn .material-symbols-outlined {
+      position: relative;
+      z-index: 1;
+      color: var(--md-sys-color-on-secondary-container);
+    }
+
+    .webcam-btn:active::after {
+      filter: brightness(0.92);
     }
 
     .status-badge {
+      position: relative;
+      overflow: hidden;
       font-size: 13px;
       font-weight: 500;
       background: var(--md-sys-color-secondary-container);
       color: var(--md-sys-color-on-secondary-container);
-      padding: 7px 14px;
+      min-height: 40px;
+      padding: 8px 14px;
       border-radius: var(--md-sys-shape-corner-full);
       display: inline-flex;
       align-items: center;
       gap: 6px;
       cursor: pointer;
+    }
+
+    .status-badge::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .status-badge:active::before {
+      opacity: 0.12;
     }
 
     .status-badge.refreshing .material-symbols-outlined {
@@ -193,27 +295,18 @@
       gap: 16px;
     }
 
-    /* Smart contextual driver/coastal alert pill */
+    /* Smart contextual driver/coastal alert pill (M3 Semantic Tokens #4) */
     .smart-alert {
       display: none;
       align-items: center;
       gap: 10px;
-      padding: 11px 16px;
+      padding: 12px 16px;
       border-radius: var(--md-sys-shape-corner-large);
-      background-color: #fff3e0;
-      color: #5d3a00;
-      border: 1px solid #ffcc80;
+      background-color: var(--md-sys-color-amber-container);
+      color: var(--md-sys-color-on-amber-container);
       font-size: 13px;
       font-weight: 600;
       line-height: 1.3;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .smart-alert {
-        background-color: #3a2810;
-        color: #ffddb3;
-        border-color: #6b4c21;
-      }
     }
 
     .smart-alert .material-symbols-outlined {
@@ -221,18 +314,34 @@
       flex-shrink: 0;
     }
 
-    /* Sunrise / Sunset marker inside hourly scroll */
+    /* Sunrise / Sunset timeline divider inside hourly scroll (M3 Semantic Tokens #4) */
     .hour-item.sun-event {
-      flex: 0 0 84px;
-      background: var(--md-sys-color-surface-container-high);
-      border: 1px dashed var(--md-sys-color-outline-variant);
+      flex: 0 0 58px;
+      background: var(--md-sys-color-amber-container);
+      color: var(--md-sys-color-on-amber-container);
       justify-content: center;
+      padding: 10px 4px;
+      gap: 4px;
+    }
+
+    .hour-item.sun-event .hour-time {
+      font-size: 11.5px;
+      color: var(--md-sys-color-on-amber-container);
     }
 
     .hour-item.sun-event .sun-label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
-      color: var(--md-sys-color-on-surface-variant);
+      color: var(--md-sys-color-on-amber-container);
+    }
+
+    /* Dynamic wind speed threshold colors (M3 Semantic Tokens #4) */
+    .wind-strong {
+      color: var(--md-sys-color-amber-ink) !important;
+    }
+
+    .wind-gale {
+      color: var(--md-sys-color-error) !important;
     }
 
     /* Pull-to-refresh subtle indicator */
@@ -250,11 +359,9 @@
     }
 
     .hero-card {
-      background: linear-gradient(145deg, var(--md-sys-color-surface-container-high), var(--md-sys-color-surface-container));
+      background-color: var(--md-sys-color-surface-container-high);
       border-radius: var(--md-sys-shape-corner-extra-large);
       padding: 24px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-      border: 1px solid var(--md-sys-color-outline-variant);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -407,11 +514,14 @@
     }
 
     .reset-today-btn {
+      position: relative;
+      overflow: hidden;
       font-size: 12px;
       font-weight: 600;
-      color: var(--md-sys-color-primary);
+      color: var(--md-sys-color-on-primary-container);
       background: var(--md-sys-color-primary-container);
-      padding: 6px 14px;
+      min-height: 36px;
+      padding: 8px 16px;
       border-radius: var(--md-sys-shape-corner-full);
       display: none;
       align-items: center;
@@ -422,11 +532,44 @@
       cursor: pointer;
     }
 
+    .reset-today-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .reset-today-btn:active::before {
+      opacity: 0.12;
+    }
+
     .hourly-card {
+      position: relative;
       background-color: var(--md-sys-color-surface-container);
       border-radius: var(--md-sys-shape-corner-extra-large);
       padding: 16px;
       border: 1px solid var(--md-sys-color-outline-variant);
+      overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .hourly-card.day-selected-highlight {
+      border-color: var(--md-sys-color-primary);
+      box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+    }
+
+    .hourly-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 24px;
+      background: linear-gradient(to right, transparent, var(--md-sys-color-surface-container));
+      pointer-events: none;
     }
 
     .hourly-scroll {
@@ -472,7 +615,7 @@
 
     .hour-precip {
       font-size: 11px;
-      color: #0077c2;
+      color: var(--md-sys-color-precip);
       display: flex;
       align-items: center;
       gap: 2px;
@@ -507,20 +650,33 @@
     }
 
     .day-card {
+      position: relative;
+      overflow: hidden;
       background-color: var(--md-sys-color-surface-container);
       border-radius: var(--md-sys-shape-corner-large);
-      padding: 13px 14px;
+      min-height: 60px;
+      padding: 12px 10px 12px 14px;
       display: grid;
-      grid-template-columns: 94px 32px minmax(0, 1fr) auto;
+      grid-template-columns: 82px 26px minmax(0, 1fr) auto;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       border: 1px solid var(--md-sys-color-outline-variant);
       cursor: pointer;
       transition: background-color 0.2s ease, border-color 0.2s ease;
     }
 
-    .day-card:active {
-      transform: scale(0.99);
+    .day-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .day-card:active::before {
+      opacity: 0.12;
     }
 
     .day-card.active-day {
@@ -550,6 +706,24 @@
       gap: 2px;
     }
 
+    .day-right-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .day-chevron {
+      font-size: 16px !important;
+      color: var(--md-sys-color-outline);
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .day-card.active-day .day-chevron {
+      color: var(--md-sys-color-primary);
+      transform: rotate(90deg);
+    }
+
     .day-temp-range {
       text-align: right;
     }
@@ -571,7 +745,7 @@
       gap: 4px;
       font-size: 12.5px;
       font-weight: 600;
-      color: #0077c2;
+      color: var(--md-sys-color-precip);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -621,7 +795,7 @@
       <span style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);" id="selectedCitySub">Piekrastes josla, Vidzeme</span>
     </div>
     <div class="header-actions">
-      <a class="webcam-btn" id="webcamBtn" href="https://www.visitsaulkrasti.lv/saulkrasti-webkamera/" target="_blank" rel="noopener noreferrer" title="Saulkrastu pludmales kamera" aria-label="Saulkrastu pludmales kamera">
+      <a class="webcam-btn" id="webcamBtn" href="https://www.visitsaulkrasti.lv/saulkrasti-webkamera/" target="_blank" rel="noopener noreferrer" onclick="openWebcam(event)" title="Saulkrastu pludmales kamera" aria-label="Saulkrastu pludmales kamera">
         <span class="material-symbols-outlined" style="font-size: 18px;">videocam</span>
       </a>
       <div class="status-badge" id="refreshBtn" onclick="fetchWeatherData()">
@@ -721,15 +895,11 @@
         </div>
 
         <div class="stat-pill">
-          <svg id="moonSvgIcon" width="26" height="26" viewBox="0 0 26 26" style="flex-shrink: 0;">
-            <circle cx="13" cy="13" r="10" fill="var(--md-sys-color-primary-container)" stroke="var(--md-sys-color-primary)" stroke-width="1.6"/>
-            <path id="moonLitPath" d="" fill="var(--md-sys-color-primary)"/>
-          </svg>
+          <span class="material-symbols-outlined" id="moonIcon">bedtime</span>
           <div class="stat-info">
-            <div class="stat-label">Mēness</div>
+            <div class="stat-label">Pilnmēness</div>
             <div class="stat-value">
-              <span id="moonPhaseName">Ielādē...</span>
-              <span class="stat-sub" id="moonFullCountdown">Pilnmēness: --</span>
+              <span id="moonPhaseName">--</span>
             </div>
           </div>
         </div>
@@ -747,7 +917,7 @@
       </div>
     </div>
 
-    <section class="hourly-card">
+    <section class="hourly-card" id="hourlyCardBox">
       <div class="hourly-scroll" id="hourlyList">
         <div style="padding: 12px; font-size: 13px; color: var(--md-sys-color-outline);">Ielādē stundu datus...</div>
       </div>
@@ -814,6 +984,20 @@
       if (webcamBtn) webcamBtn.style.display = (cityKey === 'saulkrasti') ? 'inline-flex' : 'none';
     }
 
+    /** Atver Saulkrastu webkameru (darbojas gan Android PWA, gan priekšskatījumā) */
+    function openWebcam(e) {
+      e.preventDefault();
+      const url = 'https://www.visitsaulkrasti.lv/saulkrasti-webkamera/';
+      const popup = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!popup) {
+        try {
+          window.top.location.href = url;
+        } catch (err) {
+          window.location.href = url;
+        }
+      }
+    }
+
     /** Pārslēdz pilsētu */
     function switchCity(cityKey) {
       if (currentCityKey === cityKey) return;
@@ -824,6 +1008,13 @@
       selectedDateString = null;
       updateStatsGridLayout();
       fetchWeatherData();
+    }
+
+    /** @param {number} speed */
+    function getWindClass(speed) {
+      if (speed >= 15.0) return 'wind-gale';
+      if (speed >= 10.0) return 'wind-strong';
+      return '';
     }
 
     /** @param {number} deg */
@@ -950,7 +1141,11 @@
       }
 
       const wind = getWindDirection(c.wind_direction_10m);
-      if (windSpeedEl) windSpeedEl.textContent = c.wind_speed_10m.toFixed(1);
+      const curWindCls = getWindClass(c.wind_speed_10m);
+      if (windSpeedEl) {
+        windSpeedEl.textContent = c.wind_speed_10m.toFixed(1);
+        windSpeedEl.className = curWindCls;
+      }
       if (windDirEl) windDirEl.textContent = wind.name;
 
       // Nosakām šī brīža nokrišņu varbūtību no stundu datiem
@@ -987,14 +1182,17 @@
       const todayDateStr = now.toLocaleDateString('en-CA');
       const isViewingToday = !selectedDateString || selectedDateString === todayDateStr;
 
+      const hourlyBox = document.getElementById('hourlyCardBox');
       if (isViewingToday) {
         if (titleText) titleText.textContent = 'Šodien pa stundām';
         if (resetBtn) resetBtn.style.display = 'none';
+        if (hourlyBox) hourlyBox.classList.remove('day-selected-highlight');
       } else {
         const selDate = new Date(selectedDateString);
         const dayLabel = weekdays[selDate.getDay()];
         if (titleText) titleText.textContent = `${dayLabel} pa stundām`;
         if (resetBtn) resetBtn.style.display = 'inline-flex';
+        if (hourlyBox) hourlyBox.classList.add('day-selected-highlight');
       }
 
       const targetDateStr = isViewingToday ? todayDateStr : selectedDateString;
@@ -1023,8 +1221,10 @@
         const temp = Math.round(h.temperature_2m[i]);
         const isCurrentHour = isViewingToday && first;
 
+        const hWindCls = getWindClass(h.wind_speed_10m[i]);
         const item = document.createElement('div');
         item.className = `hour-item ${isCurrentHour ? 'active' : ''}`;
+        item.setAttribute('data-hour', String(itemDate.getHours()));
         item.innerHTML = `
           <span class="hour-time">${isCurrentHour ? 'Tagad' : itemDate.getHours() + ':00'}</span>
           <span class="material-symbols-outlined" style="font-size: 26px;">${wmo.icon}</span>
@@ -1037,7 +1237,7 @@
             ${h.precipitation_probability[i]}%${h.precipitation[i] > 0 ? ` (${h.precipitation[i].toFixed(1)}mm)` : ''}
           </span>` : ''}
           <span class="hour-wind">
-            <span>${h.wind_speed_10m[i].toFixed(1)}</span><span class="wind-dir-letter">${wind.name}</span>
+            <span class="${hWindCls}">${h.wind_speed_10m[i].toFixed(1)}</span><span class="wind-dir-letter">${wind.name}</span>
           </span>
         `;
         list.appendChild(item);
@@ -1049,7 +1249,7 @@
           srCard.className = 'hour-item sun-event';
           srCard.innerHTML = `
             <span class="hour-time">${srTime}</span>
-            <span class="material-symbols-outlined" style="font-size: 24px; color: var(--md-sys-color-primary);">wb_twilight</span>
+            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--md-sys-color-on-amber-container);">wb_twilight</span>
             <span class="sun-label">Saullēkts</span>
           `;
           list.appendChild(srCard);
@@ -1060,7 +1260,7 @@
           ssCard.className = 'hour-item sun-event';
           ssCard.innerHTML = `
             <span class="hour-time">${ssTime}</span>
-            <span class="material-symbols-outlined" style="font-size: 24px; color: var(--md-sys-color-primary);">nights_stay</span>
+            <span class="material-symbols-outlined" style="font-size: 20px; color: var(--md-sys-color-on-amber-container);">nights_stay</span>
             <span class="sun-label">Saulriets</span>
           `;
           list.appendChild(ssCard);
@@ -1069,7 +1269,16 @@
         first = false;
       }
 
-      list.scrollTo({ left: 0, behavior: 'smooth' });
+      if (!isViewingToday) {
+        const morningCard = list.querySelector('[data-hour="7"]');
+        if (morningCard) {
+          list.scrollTo({ left: morningCard.offsetLeft - 16, behavior: 'smooth' });
+        } else {
+          list.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+      } else {
+        list.scrollTo({ left: 0, behavior: 'smooth' });
+      }
     }
 
     /** @param {any} d */
@@ -1109,6 +1318,7 @@
         }
         const shortDesc = wmo.desc === 'Sniegputenis / Slapjdranķis' ? 'Slapjdranķis' : wmo.desc;
 
+        const dWindCls = getWindClass(d.wind_speed_10m_max[i]);
         card.innerHTML = `
           <div>
             <div class="day-name">${dayName}</div>
@@ -1120,12 +1330,15 @@
               <span>${shortDesc} ${extraDetailText}</span>
             </span>
             <span class="wind-detail">
-              <span>${d.wind_speed_10m_max[i].toFixed(1)}</span><span class="wind-dir-letter">${wind.name}</span>
+              <span class="${dWindCls}">${d.wind_speed_10m_max[i].toFixed(1)}</span><span class="wind-dir-letter">${wind.name}</span>
             </span>
           </div>
-          <div class="day-temp-range">
-            <span class="day-max">${maxTemp > 0 ? '+' : ''}${maxTemp}°</span>
-            <span class="day-min">${minTemp > 0 ? '+' : ''}${minTemp}°</span>
+          <div class="day-right-wrap">
+            <div class="day-temp-range">
+              <span class="day-max">${maxTemp > 0 ? '+' : ''}${maxTemp}°</span>
+              <span class="day-min">${minTemp > 0 ? '+' : ''}${minTemp}°</span>
+            </div>
+            <span class="material-symbols-outlined day-chevron">chevron_right</span>
           </div>
         `;
         list.appendChild(card);
@@ -1214,48 +1427,27 @@
       const illumFraction = (1 - Math.cos(theta)) / 2;
 
       const nameEl = document.getElementById('moonPhaseName');
-      const countEl = document.getElementById('moonFullCountdown');
-      const litPathEl = document.getElementById('moonLitPath');
+      const moonIconEl = document.getElementById('moonIcon');
 
       const dFull = Math.round(daysToFull);
-      if (nameEl) {
-        nameEl.style.fontSize = '13px';
-        nameEl.style.fontWeight = '500';
-        nameEl.style.color = 'var(--md-sys-color-on-surface)';
-        nameEl.style.whiteSpace = 'nowrap';
+      const isWaxing = phaseCycle <= 0.5;
+      if (moonIconEl) {
         if (dFull === 0) {
-          nameEl.innerHTML = 'Pilnmēness · <strong>šodien</strong>';
+          moonIconEl.textContent = 'brightness_1';
+          moonIconEl.style.transform = 'none';
+        } else {
+          moonIconEl.textContent = 'bedtime';
+          moonIconEl.style.transform = isWaxing ? 'scaleX(-1)' : 'none';
+        }
+      }
+      if (nameEl) {
+        if (dFull === 0) {
+          nameEl.textContent = 'šodien';
         } else if (dFull === 1) {
-          nameEl.innerHTML = 'Pilnmēness · <strong>rīt</strong>';
+          nameEl.textContent = 'rīt';
         } else {
-          nameEl.innerHTML = `Pilnmēness · <strong>${dFull}d</strong>`;
+          nameEl.textContent = `pēc ${dFull} d.`;
         }
-      }
-
-      // Dinamiski uzzīmē zilā lauka platumu Mēness ikonā atbilstoši fāzei
-      if (litPathEl) {
-        const r = 10;
-        const cx = 13, cy = 13;
-        if (illumFraction <= 0.005) {
-          litPathEl.setAttribute('d', '');
-        } else if (illumFraction >= 0.995) {
-          litPathEl.setAttribute('d', `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`);
-        } else {
-          const rx = Math.abs(Math.cos(theta)) * r;
-          const isWaxing = phaseCycle <= 0.5;
-          const outerSweep = isWaxing ? 1 : 0;
-          const innerSweep = isWaxing
-            ? (illumFraction < 0.5 ? 0 : 1)
-            : (illumFraction > 0.5 ? 0 : 1);
-          litPathEl.setAttribute(
-            'd',
-            `M ${cx} ${cy - r} A ${r} ${r} 0 0 ${outerSweep} ${cx} ${cy + r} A ${rx.toFixed(2)} ${r} 0 0 ${innerSweep} ${cx} ${cy - r} Z`
-          );
-        }
-      }
-      
-      if (countEl) {
-        countEl.textContent = phaseName;
       }
     }
 
