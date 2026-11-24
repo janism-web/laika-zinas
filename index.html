@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0&icon_names=ac_unit,air,arrow_downward,auto_awesome,autorenew,bedtime,brightness_1,calendar_month,chevron_right,clear_day,cloud,directions_boat,flare,foggy,location_city,near_me,nights_stay,partly_cloudy_day,rainy,schedule,sensors,thunderstorm,videocam,warning,water_drop,waves,wb_twilight,weather_snowy&display=block" />
   
   <style>
     :root {
@@ -85,6 +85,9 @@
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    header, .city-segmented-control, .day-card, .hour-item {
       user-select: none;
     }
 
@@ -118,32 +121,6 @@
       display: flex;
       align-items: center;
       gap: 6px;
-    }
-
-    /* Material 3 State Layer helper */
-    .m3-interactive {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .m3-interactive::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-color: currentColor;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.15s cubic-bezier(0.2, 0, 0, 1);
-    }
-
-    @media (hover: hover) {
-      .m3-interactive:hover::before {
-        opacity: 0.08;
-      }
-    }
-
-    .m3-interactive:active::before {
-      opacity: 0.12;
     }
 
     /* Material 3 Segmented Button Group (#1) */
@@ -638,11 +615,6 @@
       color: var(--md-sys-color-on-surface);
     }
 
-    .wind-icon {
-      font-size: 14px !important;
-      display: inline-block;
-    }
-
     .daily-list {
       display: flex;
       flex-direction: column;
@@ -771,17 +743,6 @@
       font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
 
-    /* Paslēpj Netlify badge */
-    [data-netlify-drawer],
-    [class*="netlify"],
-    #netlify-badge,
-    .netlify-badge,
-    netlify-drawer {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-    }
   </style>
 </head>
 <body>
@@ -828,13 +789,13 @@
 
   <main class="container">
     <!-- Dinamisks brīdinājums (melnā ledus risks, stipras brāzmas, bīstama migla) -->
-    <div class="smart-alert" id="smartAlertBanner">
+    <div class="smart-alert" id="smartAlertBanner" role="status" aria-live="polite">
       <span class="material-symbols-outlined" id="smartAlertIcon">warning</span>
       <span id="smartAlertText"></span>
     </div>
 
     <!-- Pašreizējais laiks -->
-    <section class="hero-card" id="heroSwipeCard">
+    <section class="hero-card" id="heroSwipeCard" aria-live="polite">
       <div class="hero-badge">
         <span class="material-symbols-outlined" style="font-size: 18px;">sensors</span>
         Tiešsaistes dati
@@ -962,13 +923,34 @@
     };
 
     const CITY_ORDER = ['saulkrasti', 'centrs', 'vecmilgravis'];
+    const MONTHS_LV = ['janv.', 'febr.', 'marts', 'apr.', 'maijs', 'jūn.', 'jūl.', 'aug.', 'sept.', 'okt.', 'nov.', 'dec.'];
+    const WEEKDAYS_LV = ['Svētdiena', 'Pirmdiena', 'Otrdiena', 'Trešdiena', 'Ceturtdiena', 'Piektdiena', 'Sestdiena'];
+
     const urlParams = new URLSearchParams(window.location.search);
     const paramCity = urlParams.get('city');
-    const savedCity = localStorage.getItem('laika_zinas_city');
+    let savedCity = null;
+    try { savedCity = localStorage.getItem('laika_zinas_city'); } catch (e) {}
+
     let currentCityKey = (paramCity && CITIES[paramCity]) ? paramCity : ((savedCity && CITIES[savedCity]) ? savedCity : 'saulkrasti');
     let cachedHourlyData = null;
     let cachedDailyData = null;
     let selectedDateString = null;
+    let activeFetchController = null;
+    let lastFetchTimestamp = 0;
+
+    /** Droši parsē YYYY-MM-DD vietējā laika joslā bez UTC nobīdes */
+    function parseLocalDate(isoDateStr) {
+      const [y, m, d] = isoDateStr.slice(0, 10).split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    /** Formātē vietējo datumu kā YYYY-MM-DD */
+    function formatLocalIsoDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
 
     function applyCityUI(cityKey) {
       document.getElementById('btnSaulkrasti').classList.toggle('active', cityKey === 'saulkrasti');
@@ -1006,8 +988,34 @@
 
       applyCityUI(cityKey);
       selectedDateString = null;
+      restoreCachedCitySnapshot(cityKey);
       updateStatsGridLayout();
       fetchWeatherData();
+    }
+
+    /** Momentāni ielādē pēdējos saglabātos datus no localStorage pirms tīkla atbildes */
+    function restoreCachedCitySnapshot(cityKey) {
+      try {
+        const raw = localStorage.getItem(`laika_zinas_cache_${cityKey}`);
+        if (!raw) return;
+        const snap = JSON.parse(raw);
+        if (snap && snap.forecast && snap.forecast.current) {
+          cachedHourlyData = snap.forecast.hourly;
+          cachedDailyData = snap.forecast.daily;
+          renderCurrent(snap.forecast.current);
+          evaluateSmartAlerts(snap.forecast.current);
+          renderDaily(snap.forecast.daily);
+          renderHourly();
+          if (typeof snap.seaTemp === 'number' && cityKey === 'saulkrasti') {
+            const valEl = document.getElementById('seaTempValue');
+            if (valEl) valEl.textContent = `${snap.seaTemp > 0 ? '+' : ''}${snap.seaTemp.toFixed(1)} °C`;
+          }
+          if (snap.updatedAt) {
+            const timeEl = document.getElementById('updateTime');
+            if (timeEl) timeEl.textContent = snap.updatedAt;
+          }
+        }
+      } catch (e) {}
     }
 
     /** @param {number} speed */
@@ -1039,30 +1047,52 @@
       if (code === 2) return { desc: 'Mākoņains', icon: 'partly_cloudy_day', isSnow: false };
       if (code === 3) return { desc: 'Apmācies', icon: 'cloud', isSnow: false };
       if ([45, 48].includes(code)) return { desc: 'Migla', icon: 'foggy', isSnow: false };
-      if ([51, 53, 55].includes(code)) return { desc: 'Lietus', icon: 'rainy', isSnow: false };
-      if ([61, 63, 65].includes(code)) return { desc: 'Lietus', icon: 'rainy', isSnow: false };
+      if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return { desc: 'Lietus', icon: 'rainy', isSnow: false };
       if ([66, 67].includes(code)) return { desc: 'Atkala', icon: 'ac_unit', isSnow: false };
       if ([71, 73, 75, 77].includes(code)) return { desc: 'Sniegs', icon: 'ac_unit', isSnow: true };
-      if ([80, 81, 82].includes(code)) return { desc: 'Lietus', icon: 'rainy', isSnow: false };
       if ([85, 86].includes(code)) return { desc: 'Sniegs', icon: 'weather_snowy', isSnow: true };
       if ([95, 96, 99].includes(code)) return { desc: 'Negaiss', icon: 'thunderstorm', isSnow: false };
       return { desc: 'Mākoņains', icon: 'cloud', isSnow: false };
     }
 
-    const weekdays = ['Svētdiena', 'Pirmdiena', 'Otrdiena', 'Trešdiena', 'Ceturtdiena', 'Piektdiena', 'Sestdiena'];
-
+    /** Paralēla API datu ielāde ar AbortController aizsardzību */
     async function fetchWeatherData() {
+      if (activeFetchController) {
+        activeFetchController.abort();
+      }
+      activeFetchController = new AbortController();
+      const { signal } = activeFetchController;
+
       const badge = document.getElementById('refreshBtn');
       if (badge) badge.classList.add('refreshing');
 
-      const city = CITIES[currentCityKey];
+      const cityKey = currentCityKey;
+      const city = CITIES[cityKey];
+
+      const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant,sunrise,sunset&wind_speed_unit=ms&timezone=auto&forecast_days=8`;
+      const auroraUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
+      const marineUrl = 'https://marine-api.open-meteo.com/v1/marine?latitude=57.26&longitude=24.38&current=sea_surface_temperature';
 
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,precipitation,rain,showers,snowfall,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_direction_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant,sunrise,sunset&wind_speed_unit=ms&timezone=auto&forecast_days=8`;
-        
-        const response = await fetch(url);
-        const data = await response.json();
+        const requests = [
+          fetch(forecastUrl, { signal }).then((r) => {
+            if (!r.ok) throw new Error('Forecast error');
+            return r.json();
+          }),
+          fetch(auroraUrl, { signal }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+          cityKey === 'saulkrasti'
+            ? fetch(marineUrl, { signal }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+            : Promise.resolve(null)
+        ];
 
+        const [forecastRes, auroraRes, marineRes] = await Promise.allSettled(requests);
+        if (signal.aborted || cityKey !== currentCityKey) return;
+
+        if (forecastRes.status !== 'fulfilled' || !forecastRes.value) {
+          throw new Error('Forecast failed');
+        }
+
+        const data = forecastRes.value;
         cachedHourlyData = data.hourly;
         cachedDailyData = data.daily;
 
@@ -1071,18 +1101,33 @@
         renderDaily(data.daily);
         renderHourly();
         calculateMoonPhase();
-        fetchAuroraForecast();
-        fetchSeaTemperature();
+        applyAuroraData(auroraRes.status === 'fulfilled' ? auroraRes.value : null);
+        const seaTemp = applySeaData(cityKey, marineRes.status === 'fulfilled' ? marineRes.value : null);
         updateStatsGridLayout();
 
         const now = new Date();
+        const formattedTime = now.toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' });
         const timeEl = document.getElementById('updateTime');
-        if (timeEl) timeEl.textContent = now.toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' });
+        if (timeEl) timeEl.textContent = formattedTime;
+        lastFetchTimestamp = Date.now();
+
+        try {
+          localStorage.setItem(`laika_zinas_cache_${cityKey}`, JSON.stringify({
+            forecast: data,
+            seaTemp,
+            updatedAt: formattedTime
+          }));
+        } catch (e) {}
       } catch (err) {
+        if (err && err.name === 'AbortError') return;
         const timeEl = document.getElementById('updateTime');
-        if (timeEl) timeEl.textContent = 'Kļūda';
+        if (timeEl && (!timeEl.textContent || timeEl.textContent === 'Ielādē...')) {
+          timeEl.textContent = 'Kļūda';
+        }
       } finally {
-        if (badge) badge.classList.remove('refreshing');
+        if (!signal.aborted && badge) {
+          badge.classList.remove('refreshing');
+        }
       }
     }
 
@@ -1131,6 +1176,7 @@
       const roundedTemp = Math.round(c.temperature_2m);
       if (tempEl) tempEl.textContent = `${roundedTemp > 0 ? '+' : ''}${roundedTemp}°`;
       if (appTempEl) appTempEl.textContent = `${c.apparent_temperature > 0 ? '+' : ''}${Math.round(c.apparent_temperature)}°`;
+
       const isFogOrLowVis = [45, 48].includes(c.weather_code) || (typeof c.visibility === 'number' && c.visibility < 1000);
       const visText = (isFogOrLowVis && typeof c.visibility === 'number') ? ` · ${Math.round(c.visibility / 10) * 10} m` : '';
       if (descEl) descEl.textContent = `${wmo.desc}${visText}`;
@@ -1148,11 +1194,15 @@
       }
       if (windDirEl) windDirEl.textContent = wind.name;
 
-      // Nosakām šī brīža nokrišņu varbūtību no stundu datiem
+      // Precīza šīs stundas nokrišņu varbūtības meklēšana pēc ISO laika prefiksa
       let currentProb = 0;
-      if (cachedHourlyData && cachedHourlyData.precipitation_probability) {
-        const curHour = new Date().getHours();
-        currentProb = cachedHourlyData.precipitation_probability[curHour] || 0;
+      if (cachedHourlyData && cachedHourlyData.time && cachedHourlyData.precipitation_probability) {
+        const now = new Date();
+        const isoHourPrefix = `${formatLocalIsoDate(now)}T${String(now.getHours()).padStart(2, '0')}`;
+        const hIdx = cachedHourlyData.time.findIndex((t) => t.startsWith(isoHourPrefix));
+        if (hIdx !== -1) {
+          currentProb = cachedHourlyData.precipitation_probability[hIdx] || 0;
+        }
       }
 
       const precipPill = document.getElementById('currentPrecipPill');
@@ -1164,7 +1214,6 @@
         if (precipProbEl) precipProbEl.textContent = `Varbūtība: ${currentProb}%`;
         if (precipIconEl) precipIconEl.textContent = (c.snowfall > 0 || wmo.isSnow) ? 'ac_unit' : 'water_drop';
       } else {
-        // Paslēpj nokrišņu kartīti, ja šobrīd nelīst
         if (precipPill) precipPill.style.display = 'none';
       }
     }
@@ -1176,10 +1225,9 @@
       const titleText = document.getElementById('hourlyTitleText');
       const resetBtn = document.getElementById('resetTodayBtn');
       if (!list) return;
-      list.innerHTML = '';
 
       const now = new Date();
-      const todayDateStr = now.toLocaleDateString('en-CA');
+      const todayDateStr = formatLocalIsoDate(now);
       const isViewingToday = !selectedDateString || selectedDateString === todayDateStr;
 
       const hourlyBox = document.getElementById('hourlyCardBox');
@@ -1188,8 +1236,8 @@
         if (resetBtn) resetBtn.style.display = 'none';
         if (hourlyBox) hourlyBox.classList.remove('day-selected-highlight');
       } else {
-        const selDate = new Date(selectedDateString);
-        const dayLabel = weekdays[selDate.getDay()];
+        const selDate = parseLocalDate(selectedDateString);
+        const dayLabel = WEEKDAYS_LV[selDate.getDay()];
         if (titleText) titleText.textContent = `${dayLabel} pa stundām`;
         if (resetBtn) resetBtn.style.display = 'inline-flex';
         if (hourlyBox) hourlyBox.classList.add('day-selected-highlight');
@@ -1198,35 +1246,36 @@
       const targetDateStr = isViewingToday ? todayDateStr : selectedDateString;
       let first = true;
 
-      // Atrodam šīs dienas saullēktu un saulrietu
       let sunriseDate = null;
       let sunsetDate = null;
       if (cachedDailyData && cachedDailyData.time && cachedDailyData.sunrise && cachedDailyData.sunset) {
-        const dIdx = cachedDailyData.time.findIndex(t => t.startsWith(targetDateStr));
+        const dIdx = cachedDailyData.time.findIndex((t) => t.startsWith(targetDateStr));
         if (dIdx !== -1) {
           sunriseDate = new Date(cachedDailyData.sunrise[dIdx]);
           sunsetDate = new Date(cachedDailyData.sunset[dIdx]);
         }
       }
 
-      for (let i = 0; i < h.time.length; i++) {
-        const itemDate = new Date(h.time[i]);
-        const itemDateStr = itemDate.toLocaleDateString('en-CA');
+      const fragment = document.createDocumentFragment();
 
+      for (let i = 0; i < h.time.length; i++) {
+        const itemDateStr = h.time[i].slice(0, 10);
         if (itemDateStr !== targetDateStr) continue;
-        if (isViewingToday && itemDate.getHours() < now.getHours()) continue;
+
+        const itemHour = parseInt(h.time[i].slice(11, 13), 10);
+        if (isViewingToday && itemHour < now.getHours()) continue;
 
         const wmo = decodeWMO(h.weather_code[i]);
         const wind = getWindDirection(h.wind_direction_10m[i]);
         const temp = Math.round(h.temperature_2m[i]);
         const isCurrentHour = isViewingToday && first;
-
         const hWindCls = getWindClass(h.wind_speed_10m[i]);
+
         const item = document.createElement('div');
         item.className = `hour-item ${isCurrentHour ? 'active' : ''}`;
-        item.setAttribute('data-hour', String(itemDate.getHours()));
+        item.setAttribute('data-hour', String(itemHour));
         item.innerHTML = `
-          <span class="hour-time">${isCurrentHour ? 'Tagad' : itemDate.getHours() + ':00'}</span>
+          <span class="hour-time">${isCurrentHour ? 'Tagad' : itemHour + ':00'}</span>
           <span class="material-symbols-outlined" style="font-size: 26px;">${wmo.icon}</span>
           <span class="hour-temp">${temp > 0 ? '+' : ''}${temp}°</span>
           ${([45, 48].includes(h.weather_code[i]) && h.visibility && typeof h.visibility[i] === 'number') ? `
@@ -1240,10 +1289,9 @@
             <span class="${hWindCls}">${h.wind_speed_10m[i].toFixed(1)}</span><span class="wind-dir-letter">${wind.name}</span>
           </span>
         `;
-        list.appendChild(item);
+        fragment.appendChild(item);
 
-        // Pēc attiecīgās stundas iestarpinām saullēkta vai saulrieta kartīti
-        if (sunriseDate && sunriseDate.getHours() === itemDate.getHours() && (!isViewingToday || sunriseDate >= now)) {
+        if (sunriseDate && sunriseDate.getHours() === itemHour && (!isViewingToday || sunriseDate >= now)) {
           const srTime = sunriseDate.toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' });
           const srCard = document.createElement('div');
           srCard.className = 'hour-item sun-event';
@@ -1252,9 +1300,10 @@
             <span class="material-symbols-outlined" style="font-size: 20px; color: var(--md-sys-color-on-amber-container);">wb_twilight</span>
             <span class="sun-label">Saullēkts</span>
           `;
-          list.appendChild(srCard);
+          fragment.appendChild(srCard);
         }
-        if (sunsetDate && sunsetDate.getHours() === itemDate.getHours() && (!isViewingToday || sunsetDate >= now)) {
+
+        if (sunsetDate && sunsetDate.getHours() === itemHour && (!isViewingToday || sunsetDate >= now)) {
           const ssTime = sunsetDate.toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' });
           const ssCard = document.createElement('div');
           ssCard.className = 'hour-item sun-event';
@@ -1263,11 +1312,13 @@
             <span class="material-symbols-outlined" style="font-size: 20px; color: var(--md-sys-color-on-amber-container);">nights_stay</span>
             <span class="sun-label">Saulriets</span>
           `;
-          list.appendChild(ssCard);
+          fragment.appendChild(ssCard);
         }
 
         first = false;
       }
+
+      list.replaceChildren(fragment);
 
       if (!isViewingToday) {
         const morningCard = list.querySelector('[data-hour="7"]');
@@ -1285,24 +1336,24 @@
     function renderDaily(d) {
       const list = document.getElementById('dailyList');
       if (!list) return;
-      list.innerHTML = '';
+
+      const fragment = document.createDocumentFragment();
 
       for (let i = 1; i <= 7 && i < d.time.length; i++) {
-        const date = new Date(d.time[i]);
         const dateIsoStr = d.time[i].slice(0, 10);
+        const date = parseLocalDate(dateIsoStr);
         const wmo = decodeWMO(d.weather_code[i]);
         const wind = getWindDirection(d.wind_direction_10m_dominant[i]);
         const maxTemp = Math.round(d.temperature_2m_max[i]);
         const minTemp = Math.round(d.temperature_2m_min[i]);
 
-        const dayName = i === 1 ? 'Rītdiena' : weekdays[date.getDay()];
-        const dateStr = `${date.getDate()}. ${['janv.', 'febr.', 'marts', 'apr.', 'maijs', 'jūn.', 'jūl.', 'aug.', 'sept.', 'okt.', 'nov.', 'dec.'][date.getMonth()]}`;
+        const dayName = i === 1 ? 'Rītdiena' : WEEKDAYS_LV[date.getDay()];
+        const dateStr = `${date.getDate()}. ${MONTHS_LV[date.getMonth()]}`;
 
         const card = document.createElement('div');
         card.className = `day-card ${selectedDateString === dateIsoStr ? 'active-day' : ''}`;
         card.onclick = () => selectDay(dateIsoStr, card);
 
-        // Rāda lietu TIKAI tad, ja tajā dienā kādā no stundām reāli būs nokrišņi (vismaz 0.1 mm)
         const hasPrecip = d.precipitation_sum[i] >= 0.1;
         let extraDetailText = hasPrecip ? `· ${d.precipitation_sum[i].toFixed(1)} mm` : '';
         if ([45, 48].includes(d.weather_code[i]) && cachedHourlyData && cachedHourlyData.visibility) {
@@ -1316,7 +1367,6 @@
             extraDetailText = `· ${Math.round(minVis / 10) * 10} m`;
           }
         }
-        const shortDesc = wmo.desc === 'Sniegputenis / Slapjdranķis' ? 'Slapjdranķis' : wmo.desc;
 
         const dWindCls = getWindClass(d.wind_speed_10m_max[i]);
         card.innerHTML = `
@@ -1326,8 +1376,8 @@
           </div>
           <span class="material-symbols-outlined" style="font-size: 26px; color: var(--md-sys-color-primary);">${wmo.icon}</span>
           <div class="day-weather-desc">
-            <span class="precip-badge" style="${hasPrecip ? 'color: var(--md-sys-color-primary);' : 'color: var(--md-sys-color-on-surface-variant); font-weight: 500;'}">
-              <span>${shortDesc} ${extraDetailText}</span>
+            <span class="precip-badge" style="${hasPrecip ? 'color: var(--md-sys-color-precip);' : 'color: var(--md-sys-color-on-surface-variant); font-weight: 500;'}">
+              <span>${wmo.desc} ${extraDetailText}</span>
             </span>
             <span class="wind-detail">
               <span class="${dWindCls}">${d.wind_speed_10m_max[i].toFixed(1)}</span><span class="wind-dir-letter">${wind.name}</span>
@@ -1341,12 +1391,14 @@
             <span class="material-symbols-outlined day-chevron">chevron_right</span>
           </div>
         `;
-        list.appendChild(card);
+        fragment.appendChild(card);
       }
+
+      list.replaceChildren(fragment);
     }
 
-    /** 
-     * @param {string} dateIsoStr 
+    /**
+     * @param {string} dateIsoStr
      * @param {HTMLElement} cardEl
      */
     function selectDay(dateIsoStr, cardEl) {
@@ -1356,8 +1408,7 @@
       }
 
       selectedDateString = dateIsoStr;
-      
-      document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active-day'));
+      document.querySelectorAll('.day-card').forEach((c) => c.classList.remove('active-day'));
       if (cardEl) cardEl.classList.add('active-day');
 
       renderHourly();
@@ -1370,67 +1421,27 @@
 
     function selectToday() {
       selectedDateString = null;
-      document.querySelectorAll('.day-card').forEach(c => c.classList.remove('active-day'));
+      document.querySelectorAll('.day-card').forEach((c) => c.classList.remove('active-day'));
       renderHourly();
     }
-
 
     /** Mēness fāzes un pilnmēness aprēķins */
     function calculateMoonPhase() {
       const now = new Date();
-      // Zināms jaunmēness atskaites punkts (2000-01-06 18:14 UTC)
-      const refNewMoon = new Date(Date.UTC(2000, 0, 6, 18, 14, 0));
-      const synodicMonth = 29.53058867; // dienas
-      
-      const diffDays = (now.getTime() - refNewMoon.getTime()) / (1000 * 60 * 60 * 24);
-      const phaseCycle = (diffDays % synodicMonth) / synodicMonth; // 0.0 līdz 1.0
-      
-      let phaseName = 'Jaunmēness';
-      let icon = 'bedtime';
-      
-      if (phaseCycle < 0.03 || phaseCycle >= 0.97) {
-        phaseName = 'Jauns';
-        icon = 'radio_button_unchecked';
-      } else if (phaseCycle < 0.22) {
-        phaseName = 'Augošs';
-        icon = 'brightness_3';
-      } else if (phaseCycle < 0.28) {
-        phaseName = 'Pusmēness';
-        icon = 'brightness_4';
-      } else if (phaseCycle < 0.47) {
-        phaseName = 'Augošs';
-        icon = 'brightness_5';
-      } else if (phaseCycle < 0.53) {
-        phaseName = 'Pilnmēness';
-        icon = 'brightness_1';
-      } else if (phaseCycle < 0.72) {
-        phaseName = 'Dilstošs';
-        icon = 'brightness_5';
-      } else if (phaseCycle < 0.78) {
-        phaseName = 'Pusmēness';
-        icon = 'brightness_4';
-      } else {
-        phaseName = 'Dilstošs';
-        icon = 'brightness_2';
-      }
+      const refNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
+      const synodicMonth = 29.53058867;
 
-      // Dienas līdz nākamajam pilnmēnesim (phaseCycle = 0.5)
-      let daysToFull;
-      if (phaseCycle <= 0.5) {
-        daysToFull = (0.5 - phaseCycle) * synodicMonth;
-      } else {
-        daysToFull = (1.5 - phaseCycle) * synodicMonth;
-      }
-
-      // Precīzs apgaismotās daļas platums (0.0 līdz 1.0)
-      const theta = phaseCycle * 2 * Math.PI;
-      const illumFraction = (1 - Math.cos(theta)) / 2;
+      const diffDays = (now.getTime() - refNewMoon) / (1000 * 60 * 60 * 24);
+      const phaseCycle = ((diffDays % synodicMonth) + synodicMonth) % synodicMonth / synodicMonth;
+      const daysToFull = phaseCycle <= 0.5
+        ? (0.5 - phaseCycle) * synodicMonth
+        : (1.5 - phaseCycle) * synodicMonth;
 
       const nameEl = document.getElementById('moonPhaseName');
       const moonIconEl = document.getElementById('moonIcon');
-
       const dFull = Math.round(daysToFull);
       const isWaxing = phaseCycle <= 0.5;
+
       if (moonIconEl) {
         if (dFull === 0) {
           moonIconEl.textContent = 'brightness_1';
@@ -1440,6 +1451,7 @@
           moonIconEl.style.transform = isWaxing ? 'none' : 'scaleX(-1)';
         }
       }
+
       if (nameEl) {
         if (dFull === 0) {
           nameEl.textContent = 'šodien';
@@ -1451,80 +1463,61 @@
       }
     }
 
-    /** Ziemeļblāzmas varbūtība no NOAA Space Weather Prediction Center (rāda TIKAI ja Kp > 5) */
-    async function fetchAuroraForecast() {
+    /** Apstrādā NOAA Ziemeļblāzmas datus (rāda TIKAI ja Kp > 5) */
+    function applyAuroraData(data) {
       const pillEl = document.getElementById('auroraPill');
       const statusEl = document.getElementById('auroraStatus');
       const kpEl = document.getElementById('auroraKp');
       const iconEl = document.getElementById('auroraIcon');
 
-      try {
-        const res = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
-        if (!res.ok) throw new Error('NOAA unavailable');
-        const data = await res.json();
-        
-        // Pēdējā rinda masīvā: [time_tag, Kp, a_running, station_count]
-        const latest = data[data.length - 1];
-        const kp = parseFloat(latest[1]);
-
-        // Rādām kartīti TIKAI tad, ja Kp ir lielāks par 5
-        if (kp > 5) {
-          if (pillEl) pillEl.style.display = 'flex';
-          if (kpEl) kpEl.textContent = `Kp indekss: ${kp.toFixed(1)} / 9`;
-          if (iconEl) iconEl.textContent = 'auto_awesome';
-          if (statusEl) {
-            statusEl.textContent = kp >= 6 ? 'Liela iespēja! (G2+ vētra)' : 'Iespējama! (G1 vētra)';
-            statusEl.style.color = kp >= 6 ? '#1b5e20' : '#2e7d32';
-          }
-        } else {
-          // Ja Kp nav lielāks par 5, kartīti pilnībā paslēpjam
-          if (pillEl) pillEl.style.display = 'none';
-        }
-      } catch (err) {
-        if (pillEl) pillEl.style.display = 'none';
-      }
-      updateStatsGridLayout();
-    }
-
-
-    /** Jūras ūdens temperatūra pie Saulkrastiem (Open-Meteo Marine API) */
-    async function fetchSeaTemperature() {
-      const pillEl = document.getElementById('seaTempPill');
-      const valEl = document.getElementById('seaTempValue');
-
-      if (currentCityKey !== 'saulkrasti') {
+      if (!Array.isArray(data) || data.length < 2) {
         if (pillEl) pillEl.style.display = 'none';
         return;
       }
 
-      if (pillEl) pillEl.style.display = 'flex';
+      const latest = data[data.length - 1];
+      const kp = parseFloat(latest[1]);
 
-      try {
-        // Koordinātas piekrastes ūdeņos pretim Saulkrastiem (57.26°N, 24.38°E)
-        const res = await fetch('https://marine-api.open-meteo.com/v1/marine?latitude=57.26&longitude=24.38&current=sea_surface_temperature');
-        if (!res.ok) throw new Error('Marine API error');
-        const data = await res.json();
-
-        if (data && data.current && typeof data.current.sea_surface_temperature === 'number') {
-          const temp = data.current.sea_surface_temperature;
-          if (valEl) valEl.textContent = `${temp > 0 ? '+' : ''}${temp.toFixed(1)} °C`;
-        } else {
-          if (pillEl) pillEl.style.display = 'none';
+      if (kp > 5) {
+        if (pillEl) pillEl.style.display = 'flex';
+        if (kpEl) kpEl.textContent = `Kp indekss: ${kp.toFixed(1)} / 9`;
+        if (iconEl) iconEl.textContent = 'auto_awesome';
+        if (statusEl) {
+          statusEl.textContent = kp >= 6 ? 'Liela iespēja! (G2+ vētra)' : 'Iespējama! (G1 vētra)';
         }
-      } catch (err) {
+      } else {
         if (pillEl) pillEl.style.display = 'none';
       }
-      updateStatsGridLayout();
     }
 
+    /** Apstrādā jūras ūdens temperatūru pie Saulkrastiem */
+    function applySeaData(cityKey, data) {
+      const pillEl = document.getElementById('seaTempPill');
+      const valEl = document.getElementById('seaTempValue');
+
+      if (cityKey !== 'saulkrasti') {
+        if (pillEl) pillEl.style.display = 'none';
+        return null;
+      }
+
+      if (data && data.current && typeof data.current.sea_surface_temperature === 'number') {
+        const temp = data.current.sea_surface_temperature;
+        if (pillEl) pillEl.style.display = 'flex';
+        if (valEl) valEl.textContent = `${temp > 0 ? '+' : ''}${temp.toFixed(1)} °C`;
+        return temp;
+      }
+
+      if (pillEl) pillEl.style.display = 'none';
+      return null;
+    }
 
     function updateStatsGridLayout() {
       const grid = document.querySelector('.stats-grid');
       if (!grid) return;
       const pills = Array.from(grid.querySelectorAll('.stat-pill'));
-      pills.forEach(p => p.classList.remove('full-span'));
-      
-      const visiblePills = pills.filter(p => p.style.display !== 'none');
+      pills.forEach((p) => p.classList.remove('full-span'));
+
+      const visiblePills = pills.filter((p) => p.style.display !== 'none');
       if (visiblePills.length % 2 === 1 && visiblePills.length > 0) {
         visiblePills[visiblePills.length - 1].classList.add('full-span');
       }
@@ -1555,7 +1548,6 @@
         }, { passive: true });
       }
 
-      // Pull-to-refresh augšmalā
       let ptrStartY = 0, pulling = false;
       const ptrEl = document.getElementById('ptrIndicator');
       const ptrText = document.getElementById('ptrText');
@@ -1590,10 +1582,25 @@
       }, { passive: true });
     })();
 
+    // Baterijas taupīšana un automātiska datu atjaunošana, atgriežoties no fona
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastFetchTimestamp > 10 * 60 * 1000) {
+        fetchWeatherData();
+      }
+    });
+
     // Inicializācija
     applyCityUI(currentCityKey);
+    restoreCachedCitySnapshot(currentCityKey);
+    calculateMoonPhase();
+    updateStatsGridLayout();
     fetchWeatherData();
-    setInterval(fetchWeatherData, 15 * 60 * 1000);
+
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchWeatherData();
+      }
+    }, 15 * 60 * 1000);
   </script>
 </body>
 </html>
