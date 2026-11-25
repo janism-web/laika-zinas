@@ -1,4 +1,4 @@
-const CACHE_NAME = 'laika-zinas-v4';
+const CACHE_NAME = 'laika-zinas-v5';
 const APP_SHELL = [
   './',
   './index.html',
@@ -29,7 +29,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Open-Meteo / NOAA APIs: Network-first with cached fallback for offline resilience
+  // Open-Meteo / NOAA APIs: Network-first ar keša rezervi bezsaistei
   if (url.hostname.includes('open-meteo.com') || url.hostname.includes('noaa.gov')) {
     event.respondWith(
       fetch(req)
@@ -45,8 +45,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Google Fonts & static assets: Cache-first with background revalidation
-  if (url.hostname.includes('googleapis.com') || url.hostname.includes('gstatic.com') || url.origin === self.location.origin) {
+  // Statiskie faili: Cache-first ar fona atjaunošanu
+  if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(req).then((cached) => {
         const networkFetch = fetch(req)
