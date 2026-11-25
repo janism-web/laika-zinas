@@ -1,7 +1,9 @@
-const CACHE_NAME = 'laika-zinas-v5';
+const CACHE_NAME = 'laika-zinas-v7';
 const APP_SHELL = [
   './',
   './index.html',
+  './style.css',
+  './app.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -10,56 +12,56 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).catch(() => {})
+    caches.open(CACHE_NAME)
+      // cache:'reload' apiet GitHub Pages HTTP kešu, lai jaunā versija tiešām ir jauna
+      .then((cache) => cache.addAll(APP_SHELL.map((u) => new Request(u, { cache: 'reload' }))))
+      .catch(() => {})
   );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
+// Tikai savi statiskie faili: cache-first ar atjaunošanu fonā.
+// Laika dati (Open-Meteo, NOAA) iet tieši uz tīklu; bezsaistes rezerve ir localStorage lietotnē.
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
 
-  // Open-Meteo / NOAA APIs: Network-first ar keša rezervi bezsaistei
-  if (url.hostname.includes('open-meteo.com') || url.hostname.includes('noaa.gov')) {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res && res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => caches.match(req))
-    );
-    return;
-  }
+  // Atslēga bez ?city=... un #, lai saīsnes strādā arī bezsaistē
+  const key = new Request(url.origin + url.pathname);
 
-  // Statiskie faili: Cache-first ar fona atjaunošanu
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(req).then((cached) => {
-        const networkFetch = fetch(req)
-          .then((res) => {
-            if (res && res.ok) {
-              const copy = res.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-            }
-            return res;
-          })
-          .catch(() => cached);
-        return cached || networkFetch;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(key);
+
+    const network = fetch(req)
+      .then((res) => {
+        if (res && res.ok) cache.put(key, res.clone());
+        return res;
       })
-    );
-  }
+      .catch(() => null);
+
+    if (cached) {
+      event.waitUntil(network);
+      return cached;
+    }
+
+    const res = await network;
+    if (res) return res;
+    if (req.mode === 'navigate') {
+      const shell = await cache.match('./index.html');
+      if (shell) return shell;
+    }
+    return Response.error();
+  })());
 });

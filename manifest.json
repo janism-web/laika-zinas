@@ -5,7 +5,6 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#e5e8f0",
   "theme_color": "#f8f9ff",
   "icons": [
@@ -68,5 +67,7 @@
         }
       ]
     }
-  ]
+  ],
+  "id": "./",
+  "lang": "lv"
 }

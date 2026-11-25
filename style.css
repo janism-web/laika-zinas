@@ -1,0 +1,804 @@
+    :root {
+      color-scheme: light dark;
+      --md-sys-color-primary: #1060a4;
+      --md-sys-color-on-primary: #ffffff;
+      --md-sys-color-primary-container: #d2e4ff;
+      --md-sys-color-on-primary-container: #001c38;
+      --md-sys-color-secondary-container: #d7e3f8;
+      --md-sys-color-on-secondary-container: #101c2b;
+      --md-sys-color-tertiary-container: #f5d9ff;
+      --md-sys-color-on-tertiary-container: #271430;
+      --md-sys-color-amber-container: #ffdf9e;
+      --md-sys-color-on-amber-container: #261900;
+      --md-sys-color-amber-ink: #7a5900;
+      --md-sys-color-error: #ba1a1a;
+      --md-sys-color-error-container: #ffdad6;
+      --md-sys-color-on-error-container: #410002;
+      --md-sys-color-precip: #00639b;
+      --md-sys-color-surface: #f8f9ff;
+      --md-sys-color-on-surface: #191c20;
+      --md-sys-color-surface-variant: #e1e2ec;
+      --md-sys-color-on-surface-variant: #44474f;
+      --md-sys-color-surface-container: #edeef6;
+      --md-sys-color-surface-container-high: #e7e8f0;
+      --md-sys-color-surface-container-lowest: #ffffff;
+      --md-sys-color-outline: #74777f;
+      --md-sys-color-outline-variant: #c4c6d0;
+      --md-sys-shape-corner-extra-large: 28px;
+      --md-sys-shape-corner-large: 20px;
+      --md-sys-shape-corner-medium: 16px;
+      --md-sys-shape-corner-full: 9999px;
+      --font-display: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --md-sys-color-primary: #a1c9ff;
+        --md-sys-color-on-primary: #00315e;
+        --md-sys-color-primary-container: #004885;
+        --md-sys-color-on-primary-container: #d2e4ff;
+        --md-sys-color-secondary-container: #3d4758;
+        --md-sys-color-on-secondary-container: #d7e3f8;
+        --md-sys-color-tertiary-container: #553f5d;
+        --md-sys-color-on-tertiary-container: #f5d9ff;
+        --md-sys-color-amber-container: #5c4300;
+        --md-sys-color-on-amber-container: #ffdf9e;
+        --md-sys-color-amber-ink: #f5be48;
+        --md-sys-color-error: #ffb4ab;
+        --md-sys-color-error-container: #93000a;
+        --md-sys-color-on-error-container: #ffdad6;
+        --md-sys-color-precip: #8ecff8;
+        --md-sys-color-surface: #111418;
+        --md-sys-color-on-surface: #e1e2e8;
+        --md-sys-color-surface-variant: #43474e;
+        --md-sys-color-on-surface-variant: #c4c6cf;
+        --md-sys-color-surface-container: #1d2024;
+        --md-sys-color-surface-container-high: #272a2f;
+        --md-sys-color-surface-container-lowest: #0c0e12;
+        --md-sys-color-outline: #8d9199;
+        --md-sys-color-outline-variant: #43474e;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    button {
+      font: inherit;
+      border: none;
+      background: none;
+      color: inherit;
+    }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+      flex-shrink: 0;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .icon-sm { width: 17px; height: 17px; }
+    .icon-xs { width: 16px; height: 16px; }
+    .icon-md { width: 20px; height: 20px; }
+    .icon-lg { width: 26px; height: 26px; }
+    .icon-stat { width: 28px; height: 28px; color: var(--md-sys-color-primary); }
+    .icon-hero { width: 64px; height: 64px; color: var(--md-sys-color-primary); }
+
+    header, .city-segmented-control, .day-card, .hour-item {
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--md-sys-color-surface);
+      color: var(--md-sys-color-on-surface);
+      line-height: 1.4;
+      padding-bottom: env(safe-area-inset-bottom, 32px);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overscroll-behavior-y: contain;
+    }
+
+    /* Smalka fona ielādes josla augšā, ja tiek atjaunoti novecojuši kešoti dati */
+    .sync-progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: transparent;
+      z-index: 1000;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .sync-progress-bar.active {
+      opacity: 1;
+    }
+
+    .sync-progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -40%;
+      width: 40%;
+      height: 100%;
+      background-color: var(--md-sys-color-primary);
+      animation: indeterminate 1.2s infinite ease-in-out;
+    }
+
+    @keyframes indeterminate {
+      0% { left: -40%; }
+      100% { left: 100%; }
+    }
+
+    header {
+      padding: calc(env(safe-area-inset-top, 20px) + 16px) 20px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .location-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .location-sub {
+      font-size: 12px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    /* Material 3 Segmented Button Group */
+    .city-segmented-control {
+      display: flex;
+      align-items: stretch;
+      background-color: transparent;
+      border-radius: var(--md-sys-shape-corner-full);
+      padding: 0;
+      margin: 4px 16px 14px;
+      gap: 0;
+      border: 1px solid var(--md-sys-color-outline);
+      overflow: hidden;
+    }
+
+    .city-btn {
+      position: relative;
+      overflow: hidden;
+      flex: 1 1 auto;
+      border-right: 1px solid var(--md-sys-color-outline);
+      background: transparent;
+      color: var(--md-sys-color-on-surface);
+      min-height: 44px;
+      padding: 10px 8px;
+      font-family: var(--font-display);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+      transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), color 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .city-btn:last-child {
+      border-right: none;
+    }
+
+    .city-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .city-btn:active::before {
+      opacity: 0.12;
+    }
+
+    .city-btn.active {
+      background-color: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+    }
+
+    /* Accessible 48x48dp Material 3 Touch Targets in Top App Bar */
+    .header-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .webcam-btn {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      border-radius: var(--md-sys-shape-corner-full);
+      background: transparent;
+      color: var(--md-sys-color-on-surface-variant);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .webcam-btn::after {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--md-sys-shape-corner-full);
+      background-color: var(--md-sys-color-secondary-container);
+      z-index: 0;
+      transition: filter 0.15s ease;
+    }
+
+    .webcam-btn .icon {
+      position: relative;
+      z-index: 1;
+      color: var(--md-sys-color-on-secondary-container);
+    }
+
+    .webcam-btn:active::after {
+      filter: brightness(0.92);
+    }
+
+    .status-badge {
+      position: relative;
+      overflow: hidden;
+      font-size: 13px;
+      font-weight: 500;
+      background: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+      min-height: 40px;
+      padding: 8px 14px;
+      border-radius: var(--md-sys-shape-corner-full);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .status-badge::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .status-badge:active::before {
+      opacity: 0.12;
+    }
+
+    .status-badge.refreshing .icon {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    .container {
+      padding: 0 16px 28px;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Smart contextual driver/coastal alert pill */
+    .smart-alert {
+      display: none;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: var(--md-sys-shape-corner-large);
+      background-color: var(--md-sys-color-amber-container);
+      color: var(--md-sys-color-on-amber-container);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    /* Sunrise / Sunset timeline divider inside hourly scroll */
+    .hour-item.sun-event {
+      flex: 0 0 62px;
+      background: var(--md-sys-color-amber-container);
+      color: var(--md-sys-color-on-amber-container);
+      justify-content: center;
+      padding: 10px 4px;
+      gap: 4px;
+    }
+
+    .hour-item.sun-event .hour-time {
+      font-size: 11.5px;
+      color: var(--md-sys-color-on-amber-container);
+    }
+
+    .hour-item.sun-event .sun-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--md-sys-color-on-amber-container);
+    }
+
+    /* Dynamic wind speed threshold colors */
+    .wind-strong {
+      color: var(--md-sys-color-amber-ink) !important;
+    }
+
+    .wind-gale {
+      color: var(--md-sys-color-error) !important;
+    }
+
+    /* Pull-to-refresh subtle indicator */
+    .ptr-indicator {
+      height: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--md-sys-color-primary);
+      font-size: 12px;
+      font-weight: 600;
+      gap: 6px;
+      transition: height 0.2s ease;
+    }
+
+    .hero-card {
+      background-color: var(--md-sys-color-surface-container-high);
+      border-radius: var(--md-sys-shape-corner-extra-large);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .hero-badge {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .main-temp-wrapper {
+      margin: 14px 0 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .main-temp {
+      font-family: var(--font-display);
+      font-size: 72px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .weather-summary {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .feels-like {
+      font-size: 14px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      margin-top: 16px;
+    }
+
+    .stat-pill {
+      background-color: var(--md-sys-color-surface-container-lowest);
+      border-radius: var(--md-sys-shape-corner-large);
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .stat-pill.full-span {
+      grid-column: 1 / -1;
+      justify-content: space-between;
+    }
+
+    .stat-pill.full-span .stat-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 1;
+      gap: 8px;
+    }
+
+    .stat-pill.full-span .stat-value {
+      align-items: flex-end;
+      text-align: right;
+      font-size: 16px;
+    }
+
+    .stat-info {
+      text-align: left;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--md-sys-color-on-surface-variant);
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1.2;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .wind-inline {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .wind-dir-code {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.2;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .section-header-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 8px 4px 4px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--md-sys-color-on-surface);
+    }
+
+    .reset-today-btn {
+      position: relative;
+      overflow: hidden;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--md-sys-color-on-primary-container);
+      background: var(--md-sys-color-primary-container);
+      min-height: 36px;
+      padding: 8px 16px;
+      border-radius: var(--md-sys-shape-corner-full);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .reset-today-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .reset-today-btn:active::before {
+      opacity: 0.12;
+    }
+
+    .hourly-card {
+      position: relative;
+      background-color: var(--md-sys-color-surface-container);
+      border-radius: var(--md-sys-shape-corner-extra-large);
+      padding: 16px;
+      border: 1px solid var(--md-sys-color-outline-variant);
+      overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .hourly-card.day-selected-highlight {
+      border-color: var(--md-sys-color-primary);
+      box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+    }
+
+    .hourly-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 24px;
+      background: linear-gradient(to right, transparent, var(--md-sys-color-surface-container));
+      pointer-events: none;
+    }
+
+    .hourly-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .hourly-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .hour-item {
+      flex: 0 0 92px;
+      background: var(--md-sys-color-surface-container-lowest);
+      border-radius: var(--md-sys-shape-corner-medium);
+      padding: 12px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      scroll-snap-align: start;
+    }
+
+    .hour-item.active {
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      font-weight: 600;
+    }
+
+    .hour-time {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .hour-temp {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .hour-precip {
+      font-size: 11px;
+      color: var(--md-sys-color-precip);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      font-weight: 600;
+    }
+
+    .hour-wind {
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 3px;
+      color: var(--md-sys-color-on-surface);
+      margin-top: 2px;
+    }
+
+    .hour-wind .wind-dir-letter {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+    }
+
+    .daily-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .day-card {
+      position: relative;
+      overflow: hidden;
+      background-color: var(--md-sys-color-surface-container);
+      border-radius: var(--md-sys-shape-corner-large);
+      min-height: 60px;
+      padding: 12px 10px 12px 14px;
+      display: grid;
+      grid-template-columns: 82px 26px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--md-sys-color-outline-variant);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .day-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: currentColor;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .day-card:active::before {
+      opacity: 0.12;
+    }
+
+    .day-card.active-day {
+      background-color: var(--md-sys-color-primary-container);
+      border-color: var(--md-sys-color-primary);
+    }
+
+    .day-card.active-day .day-name {
+      color: var(--md-sys-color-on-primary-container);
+    }
+
+    .day-name {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .day-date {
+      font-size: 12px;
+      color: var(--md-sys-color-on-surface-variant);
+    }
+
+    .day-weather-desc {
+      font-size: 12px;
+      color: var(--md-sys-color-on-surface-variant);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .day-right-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .day-chevron {
+      color: var(--md-sys-color-outline);
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .day-card.active-day .day-chevron {
+      color: var(--md-sys-color-primary);
+      transform: rotate(90deg);
+    }
+
+    .day-temp-range {
+      text-align: right;
+    }
+
+    .day-max {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .day-min {
+      font-size: 13px;
+      color: var(--md-sys-color-on-surface-variant);
+      margin-left: 5px;
+    }
+
+    .precip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--md-sys-color-precip);
+    }
+
+    .wind-detail {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .wind-detail .wind-dir-letter {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--md-sys-color-on-surface);
+    }
+  
+    .wind-gale::after { content: '!'; }
+
+    .smart-alert-row { display: flex; align-items: center; gap: 10px; }
+
+    /* Webkameras dialogs */
+    #camDialog {
+      margin: auto;
+      width: min(calc(100% - 24px), 480px);
+      border: none;
+      padding: 12px;
+      border-radius: var(--md-sys-shape-corner-extra-large);
+      background: var(--md-sys-color-surface-container-high);
+      color: var(--md-sys-color-on-surface);
+    }
+    #camDialog::backdrop { background: rgb(0 0 0 / 0.6); }
+    #camFrame {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border: 0;
+      border-radius: var(--md-sys-shape-corner-medium);
+      background: #000;
+    }
+    .cam-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .cam-bar a { color: var(--md-sys-color-primary); }
+    .cam-bar button { min-width: 44px; min-height: 44px; font-size: 18px; cursor: pointer; }
+
+    .empty-note { padding: 12px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+      .sync-progress-bar::after { animation: none; left: 0; width: 100%; }
+    }
